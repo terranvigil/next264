@@ -171,3 +171,72 @@ should read ~1.30-1.35x (from 1.53x) and the analysis collapse ratio should
 move from 0.67 toward ~0.55. If it does not, the residual is the est-path bin
 content and the b-adapt placement gap, both of which are documented trades —
 and this line of work is done.
+
+---
+
+## 5. RESULTS REVISION — the arms executed (2026-08-27, same day)
+
+Every arm above was measured or sized the same day. The short version: **the
+tail was already x264-shaped by prior rounds, the remaining per-stage gap is
+dust that no single safe arm collects, and the one lever whose ceiling matches
+the gap is pre-ME skip prediction — M6.** Details, so nothing gets re-run:
+
+### Arm A: already built, and the missing half is measured NULL
+
+Reading the tournament to place the truncation found it **already there**:
+`bexit_ok` computes exactly the 33/32 direct-competitiveness test at exactly
+x264's point (macroblock.c ~7360), the tournament was already reordered to
+x264's shape (direct + 16x16 RD before any subpartition — the comment block
+cites the same <reference-source> flow), and the B_SKIP return ships default-on for
+non-reference Bs. What Arm A actually had left was the reference-B half — and
+that too existed as `N264_B_SKIP_EXIT=3` (E1, commit 568cf8c: readmit ref-Bs
+when `mbtree_off >= 0`, i.e. nothing downstream reads this MB), which PASSED
+its gate battery 08-17 but was never priced on animation content because
+bbb/sita entered the corpus on 08-26.
+
+Re-priced today: the guard works — on bbb it readmits **84% of the ref-blocked
+set** (exit rate 37.0% -> 57.3% of escapees) — and the wall does not move:
+bbb t1 -0.8%, t8 0.0%; sita -0.5%/0.0%; samsung 0.0%/0.0% (median of 3).
+**The tail those 22k MBs skip is already nearly free** (B_8x8 is QGATE-gated
+to 14% engagement, rect is off, intra is SATD-screened). Arm A's 6-9% ceiling
+was wrong: the ceiling of tail truncation is ~1%, and it is already collected.
+`=3` stays default-off: readmission that buys no wall is pure BD risk.
+
+### Arm B: sized at ~1%, refused
+
+BPROF prices all B-side intra on bbb at 25.9 ms of a 2,580 ms encode (1.0%),
+P-side intra similar. Below the BD-risk bar for a bits-moving gate; refused
+without implementation.
+
+### Arm C: sized at <=1%, deferred
+
+The probe is 67.5 ms on bbb (2.6% of t1); a conservative bdist bound can skip
+at most the sure-fail half (~1%), cannot be made provably bit-exact (psy term
+in bdist), and would ship default-off, collecting nothing. Deferred.
+
+### Arm D: confirmed est-path, terminal
+
+The 3.0x per-trial RD gap is the est path's bin content, round 16's terminal
+verdict. Not reopened.
+
+### The closing cross-check, and where the gap actually lives
+
+`N264_THREAD_PROF` on bbb t1: **analyze(WAVEFRONT) = 76.5% of the GOP wall
+(970 ms), and 970/638.8 = 1.52x — the work ratio to two decimals.** So on easy
+content the analysis loop is the entire deficit; lookahead (14.2%) and
+entropy/deblock (~4%) are side terms. Within analysis the per-MB split on
+eventual-skip Bs is probe 2.8x / rd 3.0x / me 1.2x summing to 2.44 vs 1.47
+us/MB, plus ~25% more B MBs from our denser B placement. No stage is
+individually large; every truncation of the back of the tournament is null
+because the front (probe + ME + direct-RD + survivor-RD) is where the money
+is, and those stages must run for the exit to know skip won.
+
+**Therefore the only mechanism whose ceiling matches the deficit is deciding
+skip BEFORE the front runs: M6, the supervised early-skip surrogate.** Its
+ceiling, now measured precisely: 75,861 eventual-skip escapees x 2.44 us =
+~185 ms = **~14% of bbb's t1 wall** (samsung ~6%, hard clips ~2%), reachable
+only by a predictor on pre-ME features (lookahead costs, neighbourhood,
+bdist). The 629k labelled rows exist (`N264_BLATE_STAT`), BVI-AOM is fetched,
+and the method doc requires the offline kill-test first. That is the next
+round, and this plan's execution ends by handing it a measured target instead
+of a guess.
