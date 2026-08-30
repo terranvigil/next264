@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample B — How video encoding works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/iosevka@4.5.0/index.css">
+<style>
+:root{
+  --mono:"Iosevka",ui-monospace,"SF Mono",Menlo,monospace;
+  --display:"Bungee","Iosevka",monospace;
+  --paper:#e5ded7; --panel:#efe9e3; --ink:#2f2f32; --dim:#585858; --rule:#c9bfb5;
+  --blue:#4b35e5; --pink:#ef5fa7; --teal:#05a79d; --deep:#212121;
+}
+*{box-sizing:border-box}
+html{background:var(--paper);color:var(--ink);font-family:var(--mono);font-size:20px;line-height:1.7;-webkit-text-size-adjust:100%}
+body{margin:0}
+::selection{background:var(--pink);color:var(--paper)}
+a{color:var(--blue);text-decoration:none;border-bottom:2px solid rgba(75,53,229,.28)}
+a:hover{background:var(--blue);color:var(--paper);border-bottom-color:var(--blue)}
+
+header.top{border-bottom:3px solid var(--ink)}
+.top-in{max-width:1000px;margin:0 auto;padding:20px 26px;display:flex;align-items:center;gap:20px;flex-wrap:wrap}
+.logo{font-family:var(--display);font-size:1.5rem;letter-spacing:.02em;color:var(--ink)}
+.logo em{font-style:normal;color:var(--pink)}
+.top nav{margin-left:auto;display:flex;gap:16px;font-size:.72rem;text-transform:uppercase;letter-spacing:.14em}
+.top nav a{border-bottom:none;color:var(--dim)}
+.top nav a.on{color:var(--ink);background:var(--pink);color:var(--paper);padding:2px 8px}
+
+main{max-width:1000px;margin:0 auto;padding:0 26px 140px}
+.hero{padding:70px 0 30px;border-bottom:1px dashed var(--rule)}
+.eyebrow{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--teal)}
+h1{font-family:var(--display);font-size:clamp(2.6rem,6.4vw,4.4rem);line-height:1.02;margin:.28em 0 .3em;color:var(--deep)}
+.lede{font-size:1.15rem;max-width:34em;color:var(--dim)}
+.meta{margin-top:26px;font-size:.78rem;color:var(--dim);display:flex;gap:26px;flex-wrap:wrap}
+.meta b{color:var(--ink);font-weight:400;border-bottom:2px solid var(--teal)}
+
+.body{display:grid;grid-template-columns:minmax(0,42rem);justify-content:start;gap:0}
+section{padding-top:64px}
+h2{font-family:var(--display);font-size:1.75rem;line-height:1.15;margin:0 0 6px;color:var(--deep)}
+h2 .num{color:var(--pink);margin-right:.5em}
+h3{font-size:1rem;text-transform:uppercase;letter-spacing:.13em;color:var(--teal);margin:40px 0 -6px}
+p{margin:20px 0;max-width:40em}
+ul{margin:20px 0;padding-left:0;list-style:none;max-width:40em}
+li{margin:14px 0;padding-left:28px;position:relative}
+li:before{content:"▚";position:absolute;left:0;color:var(--pink);font-size:.8em}
+b,strong{font-weight:700;color:var(--deep);background:rgba(239,95,167,.16)}
+code{background:var(--ink);color:var(--paper);padding:1px 6px;font-size:.86em}
+
+.callout{border:1px solid var(--ink);border-left:10px solid var(--teal);background:var(--panel);padding:20px 24px;margin:38px 0;max-width:40em;font-size:.92rem}
+.callout .tag{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--teal);display:block;margin-bottom:8px}
+
+figure{margin:46px 0;max-width:44rem}
+figcaption{font-size:.78rem;color:var(--dim);margin-top:14px;border-left:3px solid var(--rule);padding-left:14px}
+pre.art{background:var(--panel);border:1px solid var(--rule);padding:22px;font-size:.8rem;line-height:1.45;overflow-x:auto;color:var(--ink);margin:0}
+pre.art b{background:none;color:var(--pink)}
+pre.art i{color:var(--teal);font-style:normal}
+
+.interactive-box{margin:46px 0;padding:22px;border:2px dashed var(--dim);background:var(--panel);max-width:44rem}
+.interactive-box .tag{font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;color:var(--blue);display:block;margin-bottom:16px}
+canvas{width:100%;display:block;image-rendering:pixelated;border:1px solid var(--ink);background:#000}
+label{display:block;margin:20px 0 8px;font-size:.82rem;color:var(--dim)}
+label b{background:none;color:var(--blue)}
+input[type=range]{width:100%;height:8px;-webkit-appearance:none;appearance:none;background:var(--rule);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;height:24px;border-radius:50%;background:var(--blue);cursor:pointer}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--blue);border:none;cursor:pointer}
+.info-row{display:flex;justify-content:space-between;border-bottom:1px solid var(--rule);padding:9px 0;font-size:.82rem}
+.info-row span{color:var(--dim)}
+.info-row b{background:none;color:var(--deep)}
+
+table{border-collapse:collapse;margin:30px 0;font-size:.84rem;width:100%;max-width:44rem}
+th{text-align:left;font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--teal);border-bottom:2px solid var(--ink);padding:8px 12px 8px 0}
+td{padding:12px 12px 12px 0;border-bottom:1px dashed var(--rule);vertical-align:top}
+td:first-child{color:var(--pink);font-weight:700}
+
+.next{margin-top:90px;border-top:3px solid var(--ink);padding-top:24px;max-width:44rem}
+.next a{font-family:var(--display);font-size:1.3rem;border-bottom:none}
+.next p{font-size:.8rem;color:var(--dim);margin-top:6px}
+</style>
+</head>
+<body>
+
+<header class="top"><div class="top-in">
+  <div class="logo">yah<em>264</em></div>
+  <nav>
+    <a class="on" href="#">encoding</a><a href="#">h.264</a><a href="#">results</a>
+    <a href="#">design</a><a href="#">story</a>
+  </nav>
+</div></header>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">part one / fundamentals</div>
+    <h1>How video<br>encoding works</h1>
+    <p class="lede">What every encoder does, and why. No H.264 on this page — that is part two,
+    and it will make more sense after this.</p>
+    <div class="meta"><span>reading time <b>11 min</b></span><span>maths <b>light</b></span>
+    <span>interactive <b>yes</b></span></div>
+  </div>
+
+  <div class="body">
+  <section>
+    <h2><span class="num">01</span>The bit budget</h2>
+    <p>One second of uncompressed 1080p, 4:2:0, sixty frames a second, is <b>187 megabytes</b>.
+    That is 1.5 gigabits per second, for one stream, before anyone has done anything clever.</p>
+    <p>A good 1080p60 stream is about 6 Mbit/s. So the job is to discard <b>249 out of every 250
+    bits</b> and have nobody notice. Everything below is a method for choosing which 249.</p>
+    <figure>
+<pre class="art">
+raw    <b>████████████████████████████████████████████████████</b> 1.5 Gbit/s
+
+ship   <b>▏</b>                                            6 Mbit/s
+       └── <i>everything else is reconstructed from a guess</i>
+</pre>
+      <figcaption>Drawn to scale. The single bar on the second row is the whole delivered stream.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2><span class="num">02</span>Four redundancies</h2>
+    <p>Compression is bookkeeping against four kinds of waste. Every standardised codec attacks the
+    same four, in the same order.</p>
+    <ul>
+      <li><b>Spatial.</b> Neighbouring pixels look alike. Predict a block from the pixels already
+      decoded above and to the left; code only the difference.</li>
+      <li><b>Temporal.</b> Frame 41 is mostly frame 40, moved. Find where each block went and send a
+      motion vector instead of a picture.</li>
+      <li><b>Statistical.</b> After prediction, what is left is mostly zero. An entropy coder spends
+      fractions of a bit on common values, more on rare ones.</li>
+      <li><b>Perceptual.</b> Eyes weigh brightness over colour, and gradients over texture detail.
+      Spend the bits where they get seen.</li>
+    </ul>
+    <div class="callout">
+      <span class="tag">the one that is a judgement call</span>
+      The first three are free: done properly they cost no quality at all. The fourth is an opinion
+      about human vision. Two encoders at the same bitrate are mostly disagreeing about perception.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">03</span>The encode loop</h2>
+    <p>Every block goes around the same circuit. Predict, subtract, transform, quantise, entropy code —
+    then the encoder <b>decodes its own output</b> and keeps that, because the reconstruction is all the
+    decoder will ever have to predict from.</p>
+    <figure>
+<pre class="art">
+  source
+    │
+    ▼
+ ┌────────┐   ┌───────────┐   ┌──────────┐   ┌─────────┐
+ │predict │──▶│ transform │──▶│ quantise │──▶│ entropy │──▶ <i>bits</i>
+ └────────┘   └───────────┘   └──────────┘   └─────────┘
+    ▲                              │
+    │                              ▼  <b>the decoder inside the encoder</b>
+    │         ┌───────────┐   ┌──────────┐
+    └─────────│ deblock + │◀──│ inverse  │
+   reference  │ reconstruct   │ quantise │
+              └───────────┘   └──────────┘
+</pre>
+      <figcaption>If the return path is off by a single bit, encoder and decoder drift and the picture
+      disintegrates a few frames later. This is why conformance testing is recon-exact.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <h2><span class="num">04</span>Where the quality goes</h2>
+    <p>Prediction, transform and entropy coding are all reversible. Exactly one step destroys
+    information: <b>quantisation</b> — divide each transform coefficient by a step size, round, move on.
+    <code>QP</code> selects that step, and the step doubles every six QP.</p>
+    <p>Drag it. This runs a real 8×8 DCT over every block in your browser, quantises, and inverts it.</p>
+
+    <div class="interactive-box">
+      <span class="tag">interactive · quantisation</span>
+      <canvas id="cv"></canvas>
+      <label for="qp">quantiser  QP = <b id="qpv">28</b></label>
+      <input id="qp" type="range" min="4" max="50" value="28">
+      <div class="info-row"><span>coefficients surviving</span><b id="kept">—</b></div>
+      <div class="info-row"><span>estimated bits</span><b id="bits">—</b></div>
+      <div class="info-row"><span>fidelity vs source</span><b id="psnr">—</b></div>
+    </div>
+
+    <p>Two things worth noticing. Bits collapse far faster than fidelity at the start — that gap is the
+    entire business model. And when it fails, it fails in 8×8 squares, because that is the transform's
+    grid. Blocking is quantisation showing through the seams, which is why a deblocking filter sits
+    inside the loop of every codec since.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">05</span>I, P and B</h2>
+    <table>
+      <tr><th>type</th><th>predicts from</th><th>trade</th></tr>
+      <tr><td>I</td><td>nothing outside itself</td><td>most bits; the only place a decoder can start</td></tr>
+      <tr><td>P</td><td>earlier frames</td><td>much cheaper; motion vectors plus a residual</td></tr>
+      <tr><td>B</td><td>earlier and later frames</td><td>cheapest; needs reordering, so it adds delay</td></tr>
+    </table>
+    <p>Frames leave the encoder out of display order so a B-frame can see the future. That reordering
+    is exactly what live encoding cannot always afford.</p>
+  </section>
+
+  <section>
+    <h2><span class="num">06</span>Rate control</h2>
+    <p>Quantisation gives one knob per block. Rate control is the policy that sets it thousands of times
+    a second, blind to the future, against a target it is not allowed to miss.</p>
+    <ul>
+      <li><b>CQP</b> — fix the knob, let the bitrate land where it lands. For experiments.</li>
+      <li><b>CRF</b> — hold quality steady, let the bitrate move. The sane default.</li>
+      <li><b>ABR</b> — hit an average over the file. Needs lookahead to know what is coming.</li>
+      <li><b>VBV</b> — never overflow the decoder's buffer. What broadcast and ABR streaming demand.</li>
+    </ul>
+    <div class="callout">
+      <span class="tag">why lookahead pays</span>
+      An encoder that has seen the next fifty frames knows the quiet shot is about to cut to an
+      explosion, and starts saving. One that has not will spend the budget on the calm and starve the
+      thing you were actually watching.
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="num">07</span>Measuring it</h2>
+    <p><code>PSNR</code> measures squared error and disagrees mildly with human eyes. <code>SSIM</code>
+    looks at structure. <code>VMAF</code> is a learned model fitted to human ratings — closest to useful,
+    with its own blind spots.</p>
+    <p>Comparing two encoders takes more than one number, because rate and quality trade against each
+    other. <b>BD-rate</b> integrates the gap between two rate/quality curves: −5% means the same quality
+    for 5% fewer bits <i>over the measured range</i>. It is half a comparison. Always read it next to
+    the wall-clock time it cost.</p>
+  </section>
+
+  <div class="next">
+    <a href="#">part two → what H.264 adds</a>
+    <p>macroblocks · intra modes · CABAC · deblocking · the rate-control knobs</p>
+  </div>
+  </div>
+</main>
+
+<script src="_demo.js"></script>
+<script>
+initQuantDemo({canvas:'cv',slider:'qp',qpOut:'qpv',keptOut:'kept',bitsOut:'bits',psnrOut:'psnr'});
+</script>
+</body>
+</html>
