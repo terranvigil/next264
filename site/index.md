@@ -32,7 +32,7 @@ Current performance (CIF and 720p):
 | 2 | pure C, multi-threaded | **0.85x** | 0.96x | −0.08 | +0.2% | all metrics pass |
 | 3 | as-shipped SIMD, multi-threaded | 0.96x | 1.14x | −0.07 | +0.2% | all metrics pass 33% of runs |
 
-Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6. Our lead goes away as soon as the frame is large enough for both encoders to consume every core. On one thread we're behind at every resolution, 1.16x at CIF and 1.30x at 1080p, because our SIMD loses to x264's hand-written assembly.
+Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6. Our lead goes away as soon as the frame is large enough for both encoders to consume every core. Give row 3 a single thread and it is behind at every resolution, 1.16x at CIF and 1.30x at 1080p, because our SIMD loses to x264's hand-written assembly. Row 1 is the pure C tier, where we are ahead.
 
 | goal | configuration | median | max | VMAF | size |
 |---|---|--:|--:|--:|--:|
