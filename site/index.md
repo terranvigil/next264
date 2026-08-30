@@ -13,7 +13,7 @@ We are using x264 as a performance and quality baseline.
 
 ## Status
 
-Compared to x264, we currently lead pure C, and our shipped NEON build ties it on small clips but runs noticeably slower at 1080p. Our SIMD still loses to x264's hand-written assembly in those cases.
+Compared to x264, we currently lead with pure C, and our shipped NEON build ties it on small clips but runs noticeably slower at 1080p. Our SIMD still loses to x264's hand-written assembly in those cases. This is expected. It's pretty amazing what the authors were able to do there.
 
 Criteria for performance (goal 3 still open):
 
@@ -32,9 +32,7 @@ Current performance (CIF and 720p):
 | 2 | pure C, multi-threaded | **0.85x** | 0.96x | −0.08 | +0.2% | all metrics pass |
 | 3 | as-shipped SIMD, multi-threaded | 0.96x | 1.14x | −0.07 | +0.2% | all metrics pass 33% of runs |
 
-Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6, so that lead is us using more of the machine rather than being faster. It goes away once the frame has enough work in it for both encoders to fill every core. Give both encoders a single thread and we are behind at every resolution: 1.16x at CIF, 1.30x at 1080p. Most of that is our SIMD against x264's hand-written assembly, and our threading costs a little more CPU on top.
-
-The same clips at ABR, for contrast:
+Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6. Our lead goes away as soon as the frame is large enough for both encoders to fill every core. We're lagging in paralellism here.
 
 | goal | configuration | median | max | VMAF | size |
 |---|---|--:|--:|--:|--:|
@@ -48,7 +46,7 @@ Quality is measured with full-frame VMAF at matched bitrates. yah264 excels at l
 
 - **[How H.264 works](how-h264-works.html)**: an explainer of the format and
   each coding tool.
-- **[Getting started](start.md)**: build it, run it, and what the presets do.
+- **[Getting started](start.md)**: how to and run yah264 and what the presets do.
 - **[Methodology](methodology.md)**: how the AI loop worked
-- **[Design](design.md)**: the pipeline, threading, rate control, and the
+- **[Design](design.md)**: the pipeline, threading, rate control and the
   conformance gate.
