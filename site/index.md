@@ -21,7 +21,7 @@ Criteria for performance (goal 3 still open):
 |---|---|
 | median speed | 1.00x or faster |
 | worst-clip speed | under 1.15x |
-| quality | within 0.5 VMAF |
+| quality | within 0.5 [VMAF](https://netflixtechblog.com/toward-a-practical-perceptual-video-quality-metric-653f208b9652) |
 | compression | within 1.0% size |
 
 Current performance (CIF and 720p):
@@ -45,11 +45,5 @@ Quality is measured with full-frame VMAF at matched bitrates. yah264 excels at l
 ## Start here
 
 - **[How video encoding works](encoding.md)**: the concepts every codec shares.
-- **[How H.264 works](how-h264-works.html)**: an explainer of the format and
-  each coding tool.
 - **[Getting started](start.md)**: how to build and run yah264 and what the
   presets do.
-- **[Design](design.md)**: the pipeline, threading, rate control and the
-  conformance gate.
-- **[Methodology](methodology.md)**: how the AI loop worked.
-- **[Story](story.md)**: how the project got here.
