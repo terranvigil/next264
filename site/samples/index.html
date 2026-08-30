@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>yah264 — style samples</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#f4f2ef;color:#222;font:18px/1.65 "IBM Plex Sans",system-ui,sans-serif}
+.wrap{max-width:900px;margin:0 auto;padding:60px 28px 100px}
+h1{font-size:2.4rem;margin:0 0 .3em;letter-spacing:-.02em}
+p.sub{color:#666;font-size:1.1rem;margin:0 0 44px;max-width:44em}
+.card{background:#fff;border:1px solid #ddd;border-radius:6px;padding:24px 26px;margin:20px 0;display:grid;grid-template-columns:64px 1fr;gap:22px}
+.card .k{font:600 2rem/1 "IBM Plex Mono",monospace;color:#6741d9}
+h2{font-size:1.3rem;margin:0 0 6px}
+h2 a{color:#111;text-decoration:none;border-bottom:2px solid #6741d9}
+.borrow{font:13px/1.6 "IBM Plex Mono",monospace;color:#555;background:#f7f6f4;border-left:3px solid #ccc;padding:10px 14px;margin:12px 0 0;white-space:pre-wrap}
+.tag{display:inline-block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#888;margin-right:14px}
+footer{margin-top:50px;font-size:.9rem;color:#777;border-top:1px solid #ddd;padding-top:20px}
+</style>
+</head>
+<body><div class="wrap">
+<h1>Six takes on one page</h1>
+<p class="sub">Same content in each: <b>How video encoding works</b> — the shared fundamentals
+section that will sit in front of the H.264 material and get reused for next265 and nextav1. Same live
+8×8 DCT figure in each, so what differs is only type, colour, layout and figure style.</p>
+
+<div class="card" style="border-color:#6741d9;border-width:2px"><div class="k">A2</div><div>
+  <h2><a href="a2-longform.html">A, with the interactive figures</a></h2>
+  <span class="tag">chosen direction</span><span class="tag">3 new live figures</span>
+  <div class="borrow">A's type and hand-drawn style, plus figures inspired by abhik.ai's mechanics:
+· loop stepper — but ours is a LOOP, so it walks the reconstruction path
+· motion search — plus the SAD cost surface and the hexagon pattern over it
+· D + lambda x R — four real candidates for one real block, winner changes live</div>
+</div></div>
+
+<div class="card" style="border-color:#6741d9;border-width:2px"><div class="k">E</div><div>
+  <h2><a href="e-recommended.html">A + D — the recommendation</a></h2>
+  <span class="tag">Plex superfamily</span><span class="tag">one accent</span><span class="tag">four chips</span>
+  <div class="borrow">A's type: IBM Plex Serif body 19px/1.75, Sans for eyebrows, Mono for code
+A's figures: feTurbulence hand-drawn concepts + Caveat labels; live canvas for numbers
+D's colour: one accent #6741d9 plus four semantic chips, used nowhere decoratively
+D's layout: prose column + sticky margin (key, TOC that tracks scroll)</div>
+</div></div>
+
+<div class="card"><div class="k">A</div><div>
+  <h2><a href="a-longform.html">Long-form, hand-drawn</a></h2>
+  <span class="tag">cpu.land</span><span class="tag">IBM Plex Serif</span><span class="tag">violet</span>
+  <div class="borrow">body 1.15rem/1.75 serif · bg #f8f9fa · accent #6741d9
+inline code #8f310c on #fff4e6 · h2 gets 78px of air
+sketch-filter SVG + Caveat handwriting labels · sticky TOC rail</div>
+</div></div>
+
+<div class="card"><div class="k">B</div><div>
+  <h2><a href="b-mono.html">Monospace on paper</a></h2>
+  <span class="tag">0byte.io</span><span class="tag">inkwash</span><span class="tag">Iosevka + Bungee</span>
+  <div class="borrow">body 20px Iosevka MONO · paper #e5ded7 · ink #2f2f32
+display face Bungee · accents #4b35e5 #ef5fa7 #05a79d
+dashed .interactive-box · figures drawn as text art</div>
+</div></div>
+
+<div class="card"><div class="k">C</div><div>
+  <h2><a href="c-scrolly.html">Split-screen, scroll-driven</a></h2>
+  <span class="tag">seeing-theory</span><span class="tag">r2d3</span><span class="tag">Assistant + Merriweather</span>
+  <div class="borrow">nav rail | 25rem prose | full-height sticky figure
+figure swaps as you scroll · progress bar · body 21px
+teal #46c8b2 blue #64bdff magenta #d90677 yellow #f5d800</div>
+</div></div>
+
+<div class="card"><div class="k">D</div><div>
+  <h2><a href="d-reference.html">Clean reference</a></h2>
+  <span class="tag">refrf.dev</span><span class="tag">Libre Baskerville + Lato</span><span class="tag">pastel chips</span>
+  <div class="borrow">62.5% rem root · body 19px · link #0054f0 · lots of white
+the four redundancies are coloured chips (#cfeefc #e6fccf #fcf3cf #fccfcf)
+that keep their colour on every later page · sticky margin column</div>
+</div></div>
+
+<footer>Every sample is one self-contained HTML file plus the shared <code>_demo.js</code>. Nothing here
+is wired into <code>build_site.py</code> yet — pick a direction first, then the layout becomes the
+template and pages stay Markdown.</footer>
+</div></body>
+</html>
