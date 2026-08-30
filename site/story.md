@@ -85,4 +85,7 @@ first.
   reading well once.
 - x86-64 SIMD, which does not exist yet.
 - A decoder, which does not exist yet and would be a separate binary.
-- Shot-based and per-title encoding, the layer past x264 that has not started.
+- Shot-based encoding, where the per-shot quality and tool decisions belong in
+  the encoder and the resolution ladder belongs above it. The shot detector and
+  per-shot encoding are built; the hooks that would make yah264 the best engine
+  under a per-title layer are not.
