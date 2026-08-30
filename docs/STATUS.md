@@ -1,17 +1,17 @@
-# next264: where we are
+# yah264: where we are
 
 Read this first when picking work back up. It's the single current-state and
 what's-next pointer; the deep design lives in the docs it links to.
 
 ## Current state: pure-C speed at 3.0x, floor verdict reached
 
-The #1 owner priority is **pure-C (scalar, no-SIMD) next264 `--preset medium` ==
+The #1 owner priority is **pure-C (scalar, no-SIMD) yah264 `--preset medium` ==
 x264 medium encode speed**. No SIMD work until pure-C is at 1x. Headlines:
 
 - **Canonical benchmark: 3.0x vs x264** (samsung_720p, 180f, `--crf 30`,
   `--threads 1`, both encoders pure-C via x264 `--disable-asm`). Same algorithm
   both sides (medium = hex), so it's apples-to-apples.
-- **Quality is ~0.5% VMAF-NEG ahead of x264 medium.** That's the crux: next264's
+- **Quality is ~0.5% VMAF-NEG ahead of x264 medium.** That's the crux: yah264's
   extra ME probes find MVs x264 misses, so they're quality-load-bearing.
 - **Verdict: pure-C medium == x264 medium at matched quality is NOT reachable.**
   Five independent ME-probe-cut attempts are exhausted (uniform-cheap,
@@ -21,6 +21,12 @@ x264 medium encode speed**. No SIMD work until pure-C is at 1x. Headlines:
   constraint that makes 1x impossible is exactly *pure-C + matched quality +
   no-SIMD*; the encoder runs fine WITH SIMD, which is the intended production
   path.
+- **The SIMD tier has two deficits of its own** (`docs/board-2026-08-28.md`).
+  Held to one thread it runs 1.16x to 1.30x slower than x264 across CIF, 720p
+  and 1080p, so the shipped path has never been at parity on equal cores.
+  Threads add another 0.14 to 0.33 of CPU work on our side, worst at CIF. The
+  board's sub-parity CIF rows come from filling more cores than x264 does.
+  Nobody has costed the parallel overhead, and it is the piece with no owner.
 
 **Owner direction: the architectural bet, not more chipping.** Lookahead-driven
 **per-MB pre-decision** uses the already-computed mb-tree motion field to spend
@@ -43,7 +49,7 @@ the big BD-neutral moves on the table.
 
 - **B two-partition economy**: bi-pred cache (byte-identical) plus x264-style
   orientation early-terminate (BD-neutral, 7 clips). 3.3x → **3.0x**.
-- **mb-tree lowres-ME memoization**: next264 re-ran the whole future-window
+- **mb-tree lowres-ME memoization**: yah264 re-ran the whole future-window
   lowres ME per anchor (O(window²)); memoizing per-source per lookahead-ring
   entry makes it O(window). compute_mbtree -75%, byte-identical, +9%. It also
   proved the ABR "+0.84" is NOT a separable rate-control pass (ABR and CRF share
@@ -54,7 +60,7 @@ the big BD-neutral moves on the table.
   Clip3, both byte-identical. They came out of a full audit that found no live
   bug and verified the CABAC context derivation spec-correct.
 - **Subpel economy, HPEL plane cache, stage profiler**: shipped at quality
-  parity; the profiler is `src/common/stgprof.{h,c}` (`-DN264_STAGE_PROF`).
+  parity; the profiler is `src/common/stgprof.{h,c}` (`-DY264_STAGE_PROF`).
 
 A ground-truth `sample` profile settled "where is the 3x": it is
 **distributed** (SATD ~1363 / ME ~1035 / transform-quant ~734 / trellis ~723 /
@@ -89,7 +95,7 @@ SIMD.
   and CABAC); only 4:4:4 8×8-transform is deferred. docs/chroma-format-plan.md.
 - **Conformance: 249/249 (468/468 full), recon-match clean.**
 - **CRF calibration** follows x264's ME-compensated lowres signal;
-  base/slope/cap are env-overridable (`N264_CRF_BASE/SLOPE/CAP`).
+  base/slope/cap are env-overridable (`Y264_CRF_BASE/SLOPE/CAP`).
 
 ## Build / verify
 
@@ -102,7 +108,7 @@ byte-identical to `make golden`), `make bench` (serial vs threaded), `make vmaf`
 ## Standing rules (don't relearn these the hard way)
 
 - Never ship a regression. Gate quality on **VMAF-NEG** BD, speed on both scalar
-  and NEON (`NEXT264_NO_ASM=1`); a C win SIMD masks still matters.
+  and NEON (`YAH264_NO_ASM=1`); a C win SIMD masks still matters.
 - Every threading change: byte-identical `--threads 1` vs HEAD **and** threaded
   == serial, **and** TSan. Reproduce with `make repro`.
 - Other encoders are baselines measured from the outside, never source to work

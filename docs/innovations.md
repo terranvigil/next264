@@ -1,6 +1,6 @@
 # Innovations under consideration
 
-Research notes on the differentiating features worth building into next264, with
+Research notes on the differentiating features worth building into yah264, with
 evidence and sources. Each section covers what the idea is, why it should win,
 what the published results say, and a sketch of how it would land here. Shot-based
 encoding has its own plan in `shot-based-plan.md`.
@@ -93,7 +93,7 @@ Rate control quality is bounded by how well the encoder predicts coded bits
 before coding. Google shipped imitation-learned rate control for VP9 and holds
 patents on ML coded-size estimation with feedback for production encoders; the
 academic side shows CNN and transformer models predicting per-CTU bits well
-enough to tighten VBV compliance and cut QP oscillation. For next264 the
+enough to tighten VBV compliance and cut QP oscillation. For yah264 the
 near-term version is not a neural net: replace scratch-CAVLC bit measurement
 with a fitted cost model, then train a small predictor of frame bits from
 lookahead features (intra cost, inter cost, MV entropy, QP) once data collection
