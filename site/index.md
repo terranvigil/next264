@@ -21,7 +21,7 @@ Criteria for performance (goal 3 still open):
 |---|---|
 | median speed | 1.00x or faster |
 | worst-clip speed | under 1.15x |
-| quality | within 0.5 [VMAF](https://netflixtechblog.com/toward-a-practical-perceptual-video-quality-metric-653f208b9652) |
+| quality | within 0.5 VMAF |
 | compression | within 1.0% size |
 
 Current performance (CIF and 720p):
@@ -40,7 +40,7 @@ Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy wh
 | 2 | pure C, multi-threaded | 1.19x | 1.31x | +0.30 | +2.9% |
 | 3 | as-shipped SIMD, multi-threaded | 1.40x | 1.52x | +0.31 | +2.9% |
 
-Quality is measured with full-frame VMAF at matched bitrates. yah264 excels at low bitrates. The lead fades higher up the range. See [Results](results.md) for the details and how to reproduce them.
+Quality is measured with full-frame [VMAF](https://netflixtechblog.com/toward-a-practical-perceptual-video-quality-metric-653f208b9652) at matched bitrates. yah264 excels at low bitrates. The lead fades higher up the range. See [Results](results.md) for the details and how to reproduce them.
 
 ## Start here
 
