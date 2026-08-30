@@ -10,7 +10,7 @@ per-stage instruments), and the ranked arms with ceilings and kill criteria.
 
 Every number below is measured on this machine at the solved matched operating
 points (bbb n 25.34 / x 26.21, ducks n 23.03 / x 21.01), 60 frames, t1, our
-side `N264_BPROF=1` (309-line stage attribution), their side the
+side `Y264_BPROF=1` (309-line stage attribution), their side the
 `xbprof.patch` fair build (`X264_BPROF=1`, vectorized C + asm per the
 instruments doc). GPL boundary per CONTRIBUTING rule 6: what crosses back is
 mechanism descriptions and calibration numbers, never code.
@@ -19,13 +19,13 @@ mechanism descriptions and calibration numbers, never code.
 
 Analysis-domain collapse, easy/hard (lower = sheds harder):
 
-    next264  (475.1+434.5) / (589.6+771.3) = 0.67
+    yah264  (475.1+434.5) / (589.6+771.3) = 0.67
     x264      638.8 / 1384.6               = 0.46
 
 Per-MB cost inside the tournament, bbb, EVENTUAL-SKIP B macroblocks (the 70%
 population that escapes our early probe and still ends as skip):
 
-| stage | next264 | x264 | ratio |
+| stage | yah264 | x264 | ratio |
 |---|--:|--:|--:|
 | ME (us/MB) | 1.13 | 0.92 | **1.2x — near parity** |
 | RD (us/MB) | 0.95 | 0.32 | **3.0x** |
@@ -44,7 +44,7 @@ admission, probe cost — while the motion search is already competitive.
   floor). Sounds like the answer; it is not. On bbb their own B_SKIP verdicts
   nearly all went THROUGH analysis (79,673 of 79,776 ran ME), so the entry
   commit caught ~nothing on this content — and ported into our RD domain it
-  covers ~0% of our escapees too (`N264_FLATSKIP_STAT` RD-floor sweep: 100%
+  covers ~0% of our escapees too (`Y264_FLATSKIP_STAT` RD-floor sweep: 100%
   precision at 0.0% coverage at 6 bits; 97.7% at 1.2% coverage at 12; 95.3% at
   10.0% at 24). Our bdist is psy-inflated (psy 2.0 shipped) and the probe
   already removed the exact-residual population. The floor is real but tiny on
@@ -83,7 +83,7 @@ For a B macroblock at medium (subme 7 = mbrd 1), in order:
 
 Also real but out of scope for this plan: b-adapt placed ~20% fewer B MBs than
 us on bbb (122,400 vs 152,945 in 60 frames) — their frame TYPER is itself
-content-adaptive. `N264_TYPE_ORACLE` already measured their placement as
+content-adaptive. `Y264_TYPE_ORACLE` already measured their placement as
 +1.64% wall for us, so this is not free money; noted, not an arm.
 
 ## 3. The arms, ranked
@@ -150,10 +150,10 @@ separate. Method per docs/archive/ml-training-method.md; BVI-AOM only.
 
 ## 4. Order of work and the standing rules that bind it
 
-1. Arm A behind `N264_B_TAIL33` (default off), byte-identical off. Wall A/B at
+1. Arm A behind `Y264_B_TAIL33` (default off), byte-identical off. Wall A/B at
    t1 AND auto (the lowres lesson: the sign can flip with thread count), then
    the BD battery, then the board.
-2. Arm B behind `N264_FAST_INTRA_GATE`, same discipline, can overlap A's BD
+2. Arm B behind `Y264_FAST_INTRA_GATE`, same discipline, can overlap A's BD
    runs (different files, same battery).
 3. Re-profile both sides after A+B (the two-sided per-stage table above is the
    before-photo; regenerating it is two commands, both instruments exist).
@@ -161,8 +161,8 @@ separate. Method per docs/archive/ml-training-method.md; BVI-AOM only.
 5. Ship decisions clip-set-wide, never per-clip; every arm's numbers land in
    this doc's revision history.
 
-Instruments used (all pre-existing or landed 08-27): `N264_BPROF`,
-`N264_FLATSKIP_STAT` (+ RD-floor sweep), `xbprof.patch`, `scripts/ffboard.py`
+Instruments used (all pre-existing or landed 08-27): `Y264_BPROF`,
+`Y264_FLATSKIP_STAT` (+ RD-floor sweep), `xbprof.patch`, `scripts/ffboard.py`
 work column, `instr-ratio.sh`. Nothing new needs building to execute this
 plan.
 
@@ -189,7 +189,7 @@ x264's point (macroblock.c ~7360), the tournament was already reordered to
 x264's shape (direct + 16x16 RD before any subpartition — the comment block
 cites the same analyse.c flow), and the B_SKIP return ships default-on for
 non-reference Bs. What Arm A actually had left was the reference-B half — and
-that too existed as `N264_B_SKIP_EXIT=3` (E1, commit 568cf8c: readmit ref-Bs
+that too existed as `Y264_B_SKIP_EXIT=3` (E1, commit 568cf8c: readmit ref-Bs
 when `mbtree_off >= 0`, i.e. nothing downstream reads this MB), which PASSED
 its gate battery 08-17 but was never priced on animation content because
 bbb/sita entered the corpus on 08-26.
@@ -221,7 +221,7 @@ verdict. Not reopened.
 
 ### The closing cross-check, and where the gap actually lives
 
-`N264_THREAD_PROF` on bbb t1: **analyze(WAVEFRONT) = 76.5% of the GOP wall
+`Y264_THREAD_PROF` on bbb t1: **analyze(WAVEFRONT) = 76.5% of the GOP wall
 (970 ms), and 970/638.8 = 1.52x — the work ratio to two decimals.** So on easy
 content the analysis loop is the entire deficit; lookahead (14.2%) and
 entropy/deblock (~4%) are side terms. Within analysis the per-MB split on
@@ -236,7 +236,7 @@ skip BEFORE the front runs: M6, the supervised early-skip surrogate.** Its
 ceiling, now measured precisely: 75,861 eventual-skip escapees x 2.44 us =
 ~185 ms = **~14% of bbb's t1 wall** (samsung ~6%, hard clips ~2%), reachable
 only by a predictor on pre-ME features (lookahead costs, neighbourhood,
-bdist). The 629k labelled rows exist (`N264_BLATE_STAT`), BVI-AOM is fetched,
+bdist). The 629k labelled rows exist (`Y264_BLATE_STAT`), BVI-AOM is fetched,
 and the method doc requires the offline kill-test first. That is the next
 round, and this plan's execution ends by handing it a measured target instead
 of a guess.
