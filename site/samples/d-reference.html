@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample D — How video encoding works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --serif:"Libre Baskerville",Garamond,serif;
+  --sans:"Lato",system-ui,sans-serif;
+  --mono:SFMono-Regular,Consolas,Menlo,monospace;
+  --ink:#333; --dim:#555; --faint:#888; --hair:#d1d1d1; --wash:#f5f5f5;
+  --link:#0054f0;
+  --c-blue:#cfeefc; --c-yellow:#fcf3cf; --c-green:#e6fccf; --c-red:#fccfcf;
+  --c-blue-d:#3d758f; --c-yellow-d:#8f7e3d; --c-green-d:#668f3d; --c-red-d:#8f3d3d;
+}
+*{box-sizing:border-box}
+html{font-size:62.5%}
+body{margin:0;background:#fff;color:var(--ink);font-family:var(--sans);font-size:1.9rem;line-height:1.75;font-weight:400}
+a{color:var(--link);text-decoration:none}
+a:hover{text-decoration:underline}
+
+header{border-bottom:1px solid var(--hair)}
+.head{max-width:112rem;margin:0 auto;padding:1.8rem 3rem;display:flex;align-items:baseline;gap:3rem}
+.mark{font-family:var(--serif);font-size:2rem}
+.mark b{color:var(--link)}
+header nav{margin-left:auto;display:flex;gap:2.4rem;font-size:1.5rem;color:var(--dim)}
+header nav a{color:var(--dim)}
+header nav a.on{color:var(--ink);font-weight:700;border-bottom:3px solid var(--link)}
+
+.page{max-width:112rem;margin:0 auto;padding:0 3rem;display:grid;grid-template-columns:minmax(0,66rem) minmax(0,24rem);gap:6rem;justify-content:center}
+@media(max-width:1000px){.page{grid-template-columns:1fr;gap:0}.margin{display:none}}
+
+main{padding:7rem 0 14rem}
+.crumb{font-size:1.4rem;letter-spacing:.14em;text-transform:uppercase;color:var(--faint)}
+h1{font-family:var(--serif);font-size:4.4rem;line-height:1.2;margin:1.6rem 0 2rem;font-weight:700;letter-spacing:-.01em}
+.lede{font-size:2.2rem;line-height:1.6;color:var(--dim);font-weight:300;margin:0 0 1rem}
+h2{font-family:var(--serif);font-size:2.8rem;line-height:1.3;margin:8rem 0 0;font-weight:700}
+h3{font-family:var(--serif);font-size:2rem;margin:4rem 0 0}
+p{margin:2rem 0}
+ul{margin:2rem 0;padding-left:2.4rem}
+li{margin:1.2rem 0}
+strong{font-weight:700}
+code{font-family:var(--mono);font-size:.85em;background:var(--wash);padding:.2rem .6rem;border-radius:3px;color:#000}
+
+/* the refrf idea: every technical term is a coloured chip, used consistently */
+.t{padding:.15em .45em;border-radius:3px;font-weight:700;white-space:nowrap}
+.t-blue{background:var(--c-blue);color:var(--c-blue-d)}
+.t-yellow{background:var(--c-yellow);color:var(--c-yellow-d)}
+.t-green{background:var(--c-green);color:var(--c-green-d)}
+.t-red{background:var(--c-red);color:var(--c-red-d)}
+
+.def{border-left:4px solid var(--hair);padding:.4rem 0 .4rem 2.4rem;margin:3rem 0}
+.def dt{font-family:var(--serif);font-weight:700;font-size:1.9rem}
+.def dd{margin:.6rem 0 2rem;color:var(--dim);font-size:1.75rem}
+
+.example{border:1px solid var(--hair);border-radius:4px;margin:3.6rem 0;overflow:hidden}
+.example .hd{background:var(--wash);border-bottom:1px solid var(--hair);padding:1rem 2rem;font-size:1.35rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint)}
+.example .bd{padding:2.4rem}
+.example p{margin:0 0 1.4rem}
+.example p:last-child{margin:0}
+
+canvas{width:100%;display:block;image-rendering:pixelated;border:1px solid var(--hair);background:#000}
+.ctl label{display:block;font-size:1.5rem;color:var(--dim);margin:2.2rem 0 .8rem}
+.ctl label b{color:var(--link);font-weight:700}
+input[type=range]{width:100%;accent-color:var(--link);height:.6rem}
+.grid3{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.2rem}
+.grid3 div{background:var(--wash);padding:1.2rem 1.6rem;border-radius:4px}
+.grid3 span{display:block;font-size:1.25rem;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}
+.grid3 b{font-family:var(--serif);font-size:2.4rem}
+
+table{border-collapse:collapse;width:100%;margin:3rem 0;font-size:1.7rem}
+th{text-align:left;font-size:1.3rem;letter-spacing:.12em;text-transform:uppercase;color:var(--faint);border-bottom:2px solid var(--ink);padding:0 1.4rem .8rem 0}
+td{padding:1.4rem 1.4rem 1.4rem 0;border-bottom:1px solid var(--hair);vertical-align:top}
+
+.margin{padding:7rem 0;font-size:1.5rem;line-height:1.6;color:var(--dim)}
+.margin .note{position:sticky;top:3rem}
+.margin h4{font-family:var(--serif);font-size:1.6rem;margin:0 0 1rem;color:var(--ink)}
+.margin ul{padding-left:1.8rem}
+.margin li{margin:.7rem 0}
+.legend b{display:inline-block;margin:.3rem .4rem .3rem 0}
+
+.next{margin-top:9rem;border-top:1px solid var(--hair);padding-top:2.6rem}
+.next a{font-family:var(--serif);font-size:2.2rem}
+.next p{font-size:1.5rem;color:var(--faint);margin-top:.6rem}
+</style>
+</head>
+<body>
+
+<header><div class="head">
+  <div class="mark">yah<b>264</b></div>
+  <nav>
+    <a class="on" href="#">Encoding</a><a href="#">H.264</a><a href="#">Results</a>
+    <a href="#">Design</a><a href="#">Story</a>
+  </nav>
+</div></header>
+
+<div class="page">
+<main>
+  <div class="crumb">Part one · fundamentals</div>
+  <h1>How video encoding works</h1>
+  <p class="lede">Every codec solves the same problem the same way. Learn the shape once and the
+  H.264-specific machinery in part two reads as a list of choices rather than a wall of acronyms.</p>
+
+  <h2>The bit budget</h2>
+  <p>A second of uncompressed 1080p, 4:2:0, at 60 frames a second is <strong>187 MB</strong> — 1.5
+  gigabits per second. A good stream of the same content is about 6 Mbit/s. The encoder discards
+  <strong>249 of every 250 bits</strong> and its whole craft is choosing which ones.</p>
+
+  <h2>Four redundancies</h2>
+  <p>Compression attacks four separate wastes. These four terms recur on every page of this
+  documentation, and they keep their colours throughout.</p>
+  <dl class="def">
+    <dt><span class="t t-blue">spatial</span></dt>
+    <dd>Neighbouring pixels look alike. Predict a block from pixels already decoded above and to the
+    left, then code only the difference.</dd>
+    <dt><span class="t t-green">temporal</span></dt>
+    <dd>Frame 41 is mostly frame 40, displaced. Find where each block went and send the motion vector
+    instead of the picture.</dd>
+    <dt><span class="t t-yellow">statistical</span></dt>
+    <dd>What survives prediction is mostly zeroes and small numbers. An entropy coder spends fractions
+    of a bit on the common values and more on the rare ones.</dd>
+    <dt><span class="t t-red">perceptual</span></dt>
+    <dd>Vision weighs brightness over colour, and smooth gradients over detail inside texture. Spend
+    the bits where they will be noticed.</dd>
+  </dl>
+  <p>The first three are bookkeeping and cost nothing in quality. Only <span class="t t-red">perceptual</span>
+  is a judgement call, which is why two encoders at one bitrate are mostly disagreeing about vision.</p>
+
+  <h2>The encode loop</h2>
+  <p>Every block runs the same circuit: predict, subtract, transform, quantise, entropy code. Then the
+  encoder decodes its own output and keeps the result — the decoder will never have anything better to
+  predict from.</p>
+  <div class="example">
+    <div class="hd">The loop, in order</div>
+    <div class="bd">
+      <p><code>predict</code> → <code>subtract</code> → <code>transform</code> → <code>quantise</code>
+      → <code>entropy code</code> → <em>bits out</em></p>
+      <p><code>inverse quantise</code> → <code>inverse transform</code> → <code>reconstruct</code> →
+      <code>deblock</code> → <em>reference for the next frame</em></p>
+      <p>Get the second row wrong by one bit and encoder and decoder drift apart within a few frames.
+      That is why conformance is tested on reconstruction, exactly, and never on appearance.</p>
+    </div>
+  </div>
+
+  <h2>Quantisation, the only lossy step</h2>
+  <p>Prediction, transform and entropy coding are reversible. <strong>Quantisation</strong> is not:
+  divide each coefficient by a step size, round, discard the remainder. <code>QP</code> selects the
+  step, which doubles every six QP.</p>
+
+  <div class="example">
+    <div class="hd">Interactive · real 8×8 DCT, quantised in your browser</div>
+    <div class="bd">
+      <canvas id="cv"></canvas>
+      <div class="ctl">
+        <label for="qp">Quantiser — QP <b id="qpv">28</b></label>
+        <input id="qp" type="range" min="4" max="50" value="28">
+      </div>
+      <div class="grid3">
+        <div><span>coefficients kept</span><b id="kept">—</b></div>
+        <div><span>estimated bits</span><b id="bits">—</b></div>
+        <div><span>fidelity</span><b id="psnr">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <p>Bits fall away faster than fidelity — that gap is the entire business model. And the failure mode
+  is 8×8 squares, the transform's own grid, which is why a deblocking filter sits inside the loop of
+  every codec designed since.</p>
+
+  <h2>Frame types</h2>
+  <table>
+    <tr><th>Type</th><th>Predicts from</th><th>Trade</th></tr>
+    <tr><td><span class="t t-red">I</span></td><td>nothing outside itself</td>
+        <td>most expensive; the only place decoding can begin</td></tr>
+    <tr><td><span class="t t-blue">P</span></td><td>earlier frames</td>
+        <td>far cheaper; motion vectors plus a residual</td></tr>
+    <tr><td><span class="t t-green">B</span></td><td>earlier and later frames</td>
+        <td>cheapest; needs reordering, so it costs latency</td></tr>
+  </table>
+
+  <h2>Rate control</h2>
+  <p>Quantisation gives one knob per block. Rate control is the policy that sets it thousands of times a
+  second, blind to the future, against a target it must not miss.</p>
+  <ul>
+    <li><code>CQP</code> — fix the knob; bitrate lands where it lands.</li>
+    <li><code>CRF</code> — hold quality steady and let bitrate move. The sane default.</li>
+    <li><code>ABR</code> — hit an average over the file; needs a lookahead.</li>
+    <li><code>VBV</code> — never overflow the decoder's buffer; required by broadcast and ABR streaming.</li>
+  </ul>
+
+  <h2>Measuring it</h2>
+  <p><code>PSNR</code> measures squared error, <code>SSIM</code> structure, and <code>VMAF</code> is
+  fitted to human ratings. Comparing encoders needs a curve rather than a number:
+  <strong>BD-rate</strong> integrates the gap between two rate/quality curves, so −5% means the same
+  quality for 5% fewer bits <em>across the measured range</em>. It is half of a comparison; the other
+  half is what it cost in time.</p>
+
+  <div class="next">
+    <a href="#">Part two — what H.264 adds →</a>
+    <p>macroblocks · intra modes · CABAC · deblocking · the rate-control knobs</p>
+  </div>
+</main>
+
+<aside class="margin">
+  <div class="note">
+    <h4>Colour key</h4>
+    <p class="legend">
+      <b><span class="t t-blue">spatial</span></b>
+      <b><span class="t t-green">temporal</span></b>
+      <b><span class="t t-yellow">statistical</span></b>
+      <b><span class="t t-red">perceptual</span></b>
+    </p>
+    <p>These four keep their colours on every page, including the H.264 tool pages, so you can see at a
+    glance which redundancy a given tool attacks.</p>
+    <h4>On this page</h4>
+    <ul>
+      <li><a href="#">The bit budget</a></li>
+      <li><a href="#">Four redundancies</a></li>
+      <li><a href="#">The encode loop</a></li>
+      <li><a href="#">Quantisation</a></li>
+      <li><a href="#">Frame types</a></li>
+      <li><a href="#">Rate control</a></li>
+      <li><a href="#">Measuring it</a></li>
+    </ul>
+    <h4>Then</h4>
+    <ul>
+      <li><a href="#">H.264: macroblocks</a></li>
+      <li><a href="#">H.264: intra prediction</a></li>
+      <li><a href="#">H.264: CABAC</a></li>
+    </ul>
+  </div>
+</aside>
+</div>
+
+<script src="_demo.js"></script>
+<script>
+initQuantDemo({canvas:'cv',slider:'qp',qpOut:'qpv',keptOut:'kept',bitsOut:'bits',psnrOut:'psnr'});
+</script>
+</body>
+</html>

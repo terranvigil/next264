@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sample E — How video encoding works (A + D)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Caveat:wght@600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   yah264 site system — sample E
+   type      A (cpu.land): IBM Plex superfamily, serif body 19px
+   colour    D (refrf.dev): one accent + four semantic chips only
+   layout    D: prose column + sticky margin notes
+   figures   A: hand-drawn for concepts, live canvas for numbers
+   ============================================================ */
+:root{
+  --serif:"IBM Plex Serif",Georgia,serif;
+  --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  --hand:"Caveat",cursive;
+
+  --ink:#232326; --dim:#57575e; --faint:#8b8b93;
+  --hair:#e3e0da; --wash:#f6f4f0; --paper:#fcfbf9;
+  --accent:#6741d9; --accent-lt:#8d6ff0; --accent-pale:#ece6ff;
+  --code:#8f310c; --code-bg:#fff4e6;
+
+  /* the only other colours on the site: one per redundancy */
+  --spatial:#cfeefc;   --spatial-d:#276184;
+  --temporal:#e6fccf;  --temporal-d:#4b7a22;
+  --statistical:#fcf3cf; --statistical-d:#8a7415;
+  --perceptual:#fccfcf; --perceptual-d:#8f3d3d;
+
+  --measure:38rem;
+}
+*{box-sizing:border-box}
+html{font-size:19px;-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--serif);
+     font-size:1rem;line-height:1.75}
+a{color:var(--accent);text-decoration:none;box-shadow:inset 0 -.11em 0 var(--accent-pale)}
+a:hover{background:var(--accent-pale)}
+
+/* ---------- masthead ---------- */
+header.site{border-bottom:1px solid var(--hair);background:#fff}
+.site-in{max-width:74rem;margin:0 auto;padding:.9rem 1.6rem;display:flex;align-items:baseline;gap:1.6rem;flex-wrap:wrap}
+.mark{font-family:var(--sans);font-weight:600;font-size:1.05rem;letter-spacing:-.01em}
+.mark b{color:var(--accent);font-weight:600}
+header.site nav{margin-left:auto;display:flex;gap:1.3rem;font-family:var(--sans);font-size:.8rem}
+header.site nav a{color:var(--dim);box-shadow:none}
+header.site nav a:hover{background:none;color:var(--ink)}
+header.site nav a.on{color:var(--ink);font-weight:600;box-shadow:inset 0 -3px 0 var(--accent)}
+
+/* ---------- shell ---------- */
+.page{max-width:74rem;margin:0 auto;padding:0 1.6rem;
+      display:grid;grid-template-columns:minmax(0,var(--measure)) minmax(0,15rem);
+      gap:4.5rem;justify-content:center}
+@media(max-width:900px){.page{grid-template-columns:1fr;gap:0}.margin{display:none}}
+main{padding:4rem 0 8rem}
+
+/* ---------- text ---------- */
+.crumb{font-family:var(--sans);font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);font-weight:600}
+h1{font-size:2.7rem;line-height:1.16;letter-spacing:-.022em;font-weight:700;margin:.5rem 0 .8rem}
+.lede{font-size:1.24rem;line-height:1.6;color:var(--dim);margin:0}
+.byline{font-family:var(--sans);font-size:.78rem;color:var(--faint);border-top:1px solid var(--hair);
+        margin-top:1.7rem;padding-top:.9rem;line-height:1.6}
+h2{font-size:1.62rem;line-height:1.32;letter-spacing:-.015em;margin:4.2rem 0 0;font-weight:700}
+h2 .n{font-family:var(--mono);font-size:.72em;font-weight:500;color:var(--faint);margin-right:.7em}
+h3{font-family:var(--sans);font-size:.95rem;font-weight:600;margin:2.4rem 0 0;letter-spacing:-.005em}
+p{margin:1.15rem 0}
+ul{margin:1.3rem 0;padding-left:1.3rem}
+li{margin:.6rem 0}
+strong{font-weight:600}
+em{font-style:italic}
+code{font-family:var(--mono);font-size:.8em;color:var(--code);background:var(--code-bg);
+     padding:.08em .35em;border-radius:2px}
+
+/* ---------- the four chips: the site's entire colour vocabulary ---------- */
+.t{font-family:var(--sans);font-size:.82em;font-weight:600;padding:.12em .45em;border-radius:3px;white-space:nowrap}
+.t-sp{background:var(--spatial);color:var(--spatial-d)}
+.t-tp{background:var(--temporal);color:var(--temporal-d)}
+.t-st{background:var(--statistical);color:var(--statistical-d)}
+.t-pc{background:var(--perceptual);color:var(--perceptual-d)}
+
+dl.defs{margin:2rem 0}
+dl.defs dt{margin-top:1.5rem}
+dl.defs dd{margin:.45rem 0 0;color:var(--dim)}
+
+/* ---------- figures ---------- */
+figure{margin:2.8rem 0}
+figure.bleed{margin-left:-2.5rem;margin-right:-2.5rem}
+@media(max-width:900px){figure.bleed{margin-left:0;margin-right:0}}
+figcaption{font-family:var(--sans);font-size:.8rem;line-height:1.6;color:var(--faint);margin-top:.8rem}
+.hand{font-family:var(--hand);font-size:19px;fill:var(--dim)}
+.hand-lg{font-family:var(--hand);font-size:23px;fill:var(--ink)}
+.rough{filter:url(#wobble)}
+svg text.lbl{font-family:"IBM Plex Sans",sans-serif;font-size:12.5px;fill:var(--ink)}
+
+/* ---------- live figure ---------- */
+.live{border:1px solid var(--hair);background:#fff;border-radius:5px;overflow:hidden;margin:2.8rem 0}
+.live .hd{font-family:var(--sans);font-size:.7rem;letter-spacing:.13em;text-transform:uppercase;
+          color:var(--faint);padding:.7rem 1.2rem;border-bottom:1px solid var(--hair);background:var(--wash)}
+.live .bd{padding:1.2rem}
+canvas{width:100%;display:block;image-rendering:pixelated;border:1px solid var(--hair);background:#000}
+.live label{display:block;font-family:var(--sans);font-size:.82rem;color:var(--dim);margin:1.1rem 0 .45rem}
+.live label b{color:var(--accent);font-family:var(--serif);font-size:1.1rem}
+input[type=range]{width:100%;accent-color:var(--accent);height:.35rem}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-top:1.1rem}
+.stats div{border-top:2px solid var(--accent-pale);padding-top:.5rem}
+.stats span{display:block;font-family:var(--sans);font-size:.62rem;letter-spacing:.11em;
+            text-transform:uppercase;color:var(--faint)}
+.stats b{font-size:1.3rem;font-weight:600}
+
+/* ---------- tables ---------- */
+table{border-collapse:collapse;width:100%;margin:2rem 0;font-size:.92rem}
+th{text-align:left;font-family:var(--sans);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase;
+   color:var(--faint);font-weight:600;padding:0 .8rem .6rem 0;border-bottom:2px solid var(--ink)}
+td{padding:.75rem .8rem .75rem 0;border-bottom:1px solid var(--hair);vertical-align:top}
+
+/* ---------- notes ---------- */
+.note{background:#fff;border:1px solid var(--hair);border-left:4px solid var(--accent-lt);
+      padding:1rem 1.3rem;margin:2.2rem 0;font-size:.94rem}
+.note h4{font-family:var(--sans);font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;
+         color:var(--accent);margin:0 0 .4rem;font-weight:600}
+.note p{margin:.5rem 0}
+
+/* ---------- margin column ---------- */
+.margin{padding:4rem 0}
+.margin .stick{position:sticky;top:1.6rem;font-family:var(--sans);font-size:.78rem;line-height:1.55;color:var(--dim)}
+.margin h4{font-family:var(--sans);font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;
+           color:var(--faint);margin:0 0 .6rem;font-weight:600}
+.margin ol{list-style:none;margin:0 0 1.8rem;padding:0;border-left:2px solid var(--hair)}
+.margin ol a{display:block;padding:.28rem 0 .28rem .8rem;margin-left:-2px;
+             border-left:2px solid transparent;color:var(--dim);box-shadow:none}
+.margin ol a:hover{color:var(--accent);border-left-color:var(--accent-lt);background:none}
+.margin ol a.on{color:var(--ink);font-weight:600;border-left-color:var(--accent)}
+.key{margin-bottom:1.8rem}
+.key div{margin:.3rem 0}
+.margin .aside-note{border-top:1px solid var(--hair);padding-top:.9rem;color:var(--faint)}
+
+.next{margin-top:5rem;border-top:1px solid var(--hair);padding-top:1.4rem}
+.next a{font-size:1.25rem;font-weight:600}
+.next p{font-family:var(--sans);font-size:.8rem;color:var(--faint);margin:.35rem 0 0}
+</style>
+</head>
+<body>
+
+<header class="site"><div class="site-in">
+  <div class="mark">yah<b>264</b></div>
+  <nav>
+    <a class="on" href="#">Encoding</a><a href="#">H.264</a><a href="#">Results</a>
+    <a href="#">Design</a><a href="#">Methodology</a><a href="#">Story</a>
+  </nav>
+</div></header>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <filter id="wobble"><feTurbulence type="fractalNoise" baseFrequency="0.021" numOctaves="3" seed="9"/>
+  <feDisplacementMap in="SourceGraphic" scale="2.1"/></filter>
+</defs></svg>
+
+<div class="page">
+<main>
+  <div class="crumb">Part one · fundamentals</div>
+  <h1>How video encoding works</h1>
+  <p class="lede">Every codec solves the same problem in the same shape. Learn it once here and the
+  H.264 machinery in part two reads as a list of choices instead of a wall of acronyms.</p>
+  <div class="byline">Nothing on this page is specific to yah264 or to H.264. The same loop runs in
+  x264, in an AV1 encoder, and in the hardware block on your phone — which is why this section gets
+  reused when we document the other two encoders.</div>
+
+  <h2 id="s1"><span class="n">01</span>The bit budget</h2>
+  <p>A second of uncompressed 1080p, 4:2:0, at 60 frames a second is <strong>187 megabytes</strong>:
+  2.07 million luma samples per frame, half as many again for the two chroma planes, one byte each,
+  sixty times over. That is 1.5 gigabits per second for a single stream.</p>
+  <p>A good 1080p60 stream lands near 6 Mbit/s. So the encoder throws away <strong>249 of every 250
+  bits</strong> and has you not notice. Everything below is a method for choosing which 249.</p>
+
+  <figure class="bleed">
+    <svg viewBox="0 0 700 160" width="100%" role="img" aria-label="A full-width bar for raw video beside a sliver for the delivered stream">
+      <g class="rough">
+        <rect x="24" y="50" width="652" height="36" fill="none" stroke="#57575e" stroke-width="2"/>
+        <rect x="24" y="50" width="2.6" height="36" fill="#6741d9"/>
+      </g>
+      <text class="hand-lg" x="24" y="38">one second of raw 1080p60 — 1.5 Gbit</text>
+      <text class="hand" x="36" y="116">this sliver ships</text>
+      <path class="rough" d="M30,108 C34,100 30,95 27,88" stroke="#6741d9" fill="none" stroke-width="2"/>
+      <text class="hand" x="500" y="116" fill="#8b8b93">the rest is rebuilt from a guess</text>
+    </svg>
+    <figcaption>Drawn to scale: the violet sliver is a 6 Mbit/s stream against its own source.</figcaption>
+  </figure>
+
+  <h2 id="s2"><span class="n">02</span>Four redundancies</h2>
+  <p>Compression is bookkeeping against four separate kinds of waste. These four terms appear on every
+  page of this documentation and they keep their colours throughout, including on the H.264 tool pages.</p>
+
+  <dl class="defs">
+    <dt><span class="t t-sp">spatial</span></dt>
+    <dd>Neighbouring pixels look alike. Predict a block from pixels already decoded above and to the
+    left of it, then code only the difference.</dd>
+    <dt><span class="t t-tp">temporal</span></dt>
+    <dd>Frame 41 is mostly frame 40, displaced. Find where each block went and send the motion vector
+    rather than the picture.</dd>
+    <dt><span class="t t-st">statistical</span></dt>
+    <dd>What survives prediction is mostly zeroes and small numbers. An entropy coder spends fractions
+    of a bit on common values and more on rare ones.</dd>
+    <dt><span class="t t-pc">perceptual</span></dt>
+    <dd>Vision weighs brightness over colour, and smooth gradients over detail buried in texture. Spend
+    the bits where they will be seen.</dd>
+  </dl>
+
+  <p>The first three are free: done properly they cost no quality at all. Only
+  <span class="t t-pc">perceptual</span> is a judgement call about human vision, which is why two
+  encoders at the same bitrate are, mostly, disagreeing about perception.</p>
+
+  <h2 id="s3"><span class="n">03</span>The encode loop</h2>
+  <p>Every block of every frame goes around one circuit: predict it, subtract the prediction, transform
+  what is left, quantise, entropy code. Then the encoder <em>decodes its own output</em> and keeps the
+  result, because that reconstruction is the only thing the decoder will ever have to predict from.</p>
+
+  <figure class="bleed">
+    <svg viewBox="0 0 700 270" width="100%" role="img" aria-label="The encode loop with its reconstruction path">
+      <g class="rough" fill="none" stroke="#232326" stroke-width="2">
+        <rect x="24" y="44" width="118" height="54" rx="3"/>
+        <rect x="178" y="44" width="118" height="54" rx="3"/>
+        <rect x="332" y="44" width="118" height="54" rx="3"/>
+        <rect x="486" y="44" width="118" height="54" rx="3"/>
+        <path d="M142,71 H176M296,71 H330M450,71 H484"/>
+      </g>
+      <g class="rough" fill="none" stroke="#6741d9" stroke-width="2">
+        <rect x="332" y="164" width="118" height="54" rx="3"/>
+        <rect x="178" y="164" width="118" height="54" rx="3"/>
+        <path d="M391,98 V162"/><path d="M332,191 H298"/>
+        <path d="M232,164 V124 C232,110 140,114 78,102" stroke-dasharray="6 5"/>
+      </g>
+      <g text-anchor="middle">
+        <text class="lbl" x="83" y="76">predict</text>
+        <text class="lbl" x="237" y="76">transform</text>
+        <text class="lbl" x="391" y="76">quantise</text>
+        <text class="lbl" x="545" y="69">entropy</text><text class="lbl" x="545" y="85">code</text>
+        <text class="lbl" x="391" y="196" fill="#6741d9">inverse</text>
+        <text class="lbl" x="237" y="188" fill="#6741d9">reconstruct</text>
+        <text class="lbl" x="237" y="204" fill="#6741d9">+ deblock</text>
+      </g>
+      <text class="hand" x="26" y="32">source frame</text>
+      <text class="hand" x="616" y="76">→ bits</text>
+      <text class="hand" x="86" y="140" fill="#6741d9">the reference the next frame predicts from</text>
+      <text class="hand" x="356" y="250">an encoder contains a whole decoder</text>
+    </svg>
+    <figcaption>Only the violet return path separates an encoder from a compressor. Get it wrong by one
+    bit and the two sides drift apart within a few frames, which is why conformance is tested on
+    reconstruction exactly, never on how it looks.</figcaption>
+  </figure>
+
+  <h2 id="s4"><span class="n">04</span>Where the quality actually goes</h2>
+  <p>Prediction, transform and entropy coding are all reversible. Exactly one step destroys
+  information: <strong>quantisation</strong> — divide every transform coefficient by a step size, round
+  it, discard the remainder. <code>QP</code> selects that step, and in every modern codec the step
+  doubles every six QP.</p>
+  <p>Below is the real thing, not a picture of it: an 8×8 DCT over every block of the image, quantised
+  at your QP and inverted again, in your browser.</p>
+
+  <div class="live">
+    <div class="hd">Live · 8×8 DCT and quantiser</div>
+    <div class="bd">
+      <canvas id="cv"></canvas>
+      <label for="qp">Quantiser — QP <b id="qpv">28</b></label>
+      <input id="qp" type="range" min="4" max="50" value="28">
+      <div class="stats">
+        <div><span>coefficients kept</span><b id="kept">—</b></div>
+        <div><span>estimated bits</span><b id="bits">—</b></div>
+        <div><span>fidelity</span><b id="psnr">—</b></div>
+      </div>
+    </div>
+  </div>
+
+  <p>Two things to take from it. Bits fall away far faster than fidelity at first, and that gap is the
+  entire business model of video compression. And when it does break, it breaks in 8×8 squares, because
+  that is the grid the transform works on — blocking is quantisation showing through the transform's own
+  seams, which is why a deblocking filter sits inside the loop of every codec designed since.</p>
+
+  <h2 id="s5"><span class="n">05</span>I, P and B</h2>
+  <p>Not every frame can lean on a neighbour, and those that can needn't look only backwards.</p>
+  <table>
+    <tr><th>Type</th><th>Predicts from</th><th>Attacks</th><th>Trade</th></tr>
+    <tr><td><strong>I</strong></td><td>nothing outside itself</td><td><span class="t t-sp">spatial</span></td>
+        <td>most expensive; the only place decoding can begin</td></tr>
+    <tr><td><strong>P</strong></td><td>earlier frames</td><td><span class="t t-tp">temporal</span></td>
+        <td>far cheaper; motion vectors plus a residual</td></tr>
+    <tr><td><strong>B</strong></td><td>earlier and later frames</td><td><span class="t t-tp">temporal</span></td>
+        <td>cheapest; needs reordering, so it costs latency</td></tr>
+  </table>
+  <p>Frames leave the encoder out of display order so a B-frame can see the future. That reordering is
+  exactly what live encoding often cannot afford.</p>
+
+  <h2 id="s6"><span class="n">06</span>Rate control</h2>
+  <p>Quantisation gives you one knob per block. Rate control is the policy that sets it thousands of
+  times a second, blind to the future, against a target it is not allowed to miss.</p>
+  <ul>
+    <li><code>CQP</code> — fix the knob and let the bitrate land where it lands. For experiments.</li>
+    <li><code>CRF</code> — hold quality steady and let the bitrate move. The right default when file
+    size is negotiable.</li>
+    <li><code>ABR</code> — hit an average across the file. Needs a lookahead to know whether the hard
+    part is still coming.</li>
+    <li><code>VBV</code> — never overflow a decoder's buffer. What broadcast and adaptive streaming
+    actually require.</li>
+  </ul>
+  <div class="note">
+    <h4>Why a lookahead earns its keep</h4>
+    <p>An encoder that has seen the next fifty frames knows this quiet shot is about to cut to an
+    explosion, and starts saving. One that has not will spend the budget on the calm and starve the
+    thing you were watching for.</p>
+  </div>
+
+  <h2 id="s7"><span class="n">07</span>Measuring it honestly</h2>
+  <p><code>PSNR</code> measures squared error and disagrees mildly with human eyes. <code>SSIM</code>
+  looks at structure. <code>VMAF</code> is a model fitted to human ratings, the closest to useful, with
+  blind spots of its own.</p>
+  <p>Comparing two encoders takes a curve rather than a number, because rate and quality trade against
+  each other. <strong>BD-rate</strong> integrates the gap between two rate/quality curves: −5% means the
+  same quality for 5% fewer bits <em>across the measured range</em>. It is half of a comparison. The
+  other half is what it cost in time, and we always publish both.</p>
+
+  <h2 id="s8"><span class="n">08</span>What part two adds</h2>
+  <p>H.264 is a particular set of answers to the questions above. Each of its tools attacks one of the
+  four redundancies, and the colour tells you which before you read a word.</p>
+  <table>
+    <tr><th>Tool</th><th>Attacks</th><th>In one line</th></tr>
+    <tr><td>Intra prediction, 9 modes</td><td><span class="t t-sp">spatial</span></td>
+        <td>extrapolate a block from its decoded neighbours along a chosen direction</td></tr>
+    <tr><td>Quarter-pel motion, multi-ref</td><td><span class="t t-tp">temporal</span></td>
+        <td>search earlier and later frames at sub-pixel precision</td></tr>
+    <tr><td>CABAC</td><td><span class="t t-st">statistical</span></td>
+        <td>adaptive arithmetic coding; roughly 10% over the simpler CAVLC</td></tr>
+    <tr><td>Adaptive quantisation, psy-RD</td><td><span class="t t-pc">perceptual</span></td>
+        <td>move bits toward flat areas and preserve texture energy</td></tr>
+    <tr><td>In-loop deblocking</td><td><span class="t t-pc">perceptual</span></td>
+        <td>smooth the transform's seams before the frame becomes a reference</td></tr>
+  </table>
+
+  <div class="next">
+    <a href="#">Part two — the H.264 coding tools →</a>
+    <p>macroblocks · intra modes · transforms · CABAC · deblocking · the rate-control knobs</p>
+  </div>
+</main>
+
+<aside class="margin">
+  <div class="stick">
+    <h4>Colour key</h4>
+    <div class="key">
+      <div><span class="t t-sp">spatial</span></div>
+      <div><span class="t t-tp">temporal</span></div>
+      <div><span class="t t-st">statistical</span></div>
+      <div><span class="t t-pc">perceptual</span></div>
+    </div>
+    <h4>On this page</h4>
+    <ol id="toc">
+      <li><a href="#s1" data-s="s1">01 · The bit budget</a></li>
+      <li><a href="#s2" data-s="s2">02 · Four redundancies</a></li>
+      <li><a href="#s3" data-s="s3">03 · The encode loop</a></li>
+      <li><a href="#s4" data-s="s4">04 · Quantisation</a></li>
+      <li><a href="#s5" data-s="s5">05 · I, P and B</a></li>
+      <li><a href="#s6" data-s="s6">06 · Rate control</a></li>
+      <li><a href="#s7" data-s="s7">07 · Measuring it</a></li>
+      <li><a href="#s8" data-s="s8">08 · What part two adds</a></li>
+    </ol>
+    <div class="aside-note">Figures with numbers in them compute those numbers in your browser.
+    Concept diagrams are drawn by hand.</div>
+  </div>
+</aside>
+</div>
+
+<script src="_demo.js"></script>
+<script>
+initQuantDemo({canvas:'cv',slider:'qp',qpOut:'qpv',keptOut:'kept',bitsOut:'bits',psnrOut:'psnr'});
+const links=[...document.querySelectorAll('#toc a')];
+const io=new IntersectionObserver(es=>es.forEach(e=>{
+  if(!e.isIntersecting)return;
+  links.forEach(a=>a.classList.toggle('on',a.dataset.s===e.target.id));
+}),{rootMargin:'-20% 0px -70% 0px'});
+document.querySelectorAll('main h2').forEach(h=>io.observe(h));
+</script>
+</body>
+</html>
