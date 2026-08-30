@@ -66,7 +66,7 @@ caught by that.
 
 ## What the AI part actually looked like
 
-The hand-optimised assembly asymmetry is the clearest single finding. Writing
+The hand-optimized assembly asymmetry is the clearest single finding. Writing
 assembly means scheduling instructions and allocating registers yourself, across
 thousands of lines, against one processor's timing. Current models do that
 badly. They handle SIMD intrinsics well, where the same parallelism is expressed
