@@ -44,9 +44,13 @@ Quality is measured with full-frame VMAF at matched bitrates. yah264 excels at l
 
 ## Start here
 
+- **[How video encoding works](encoding.md)**: the concepts every codec shares,
+  before any particular one.
 - **[How H.264 works](how-h264-works.html)**: an explainer of the format and
   each coding tool.
-- **[Getting started](start.md)**: how to and run yah264 and what the presets do.
-- **[Methodology](methodology.md)**: how the AI loop worked
+- **[Getting started](start.md)**: how to build and run yah264 and what the
+  presets do.
 - **[Design](design.md)**: the pipeline, threading, rate control and the
   conformance gate.
+- **[Methodology](methodology.md)**: how the AI loop worked.
+- **[Story](story.md)**: how the project got here.
