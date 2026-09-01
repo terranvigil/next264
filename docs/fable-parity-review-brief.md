@@ -113,10 +113,16 @@ fixed; it is gated on the ABR accuracy half, which nobody has run.
 
 ## State of the tree at handoff
 
-- `main` = `77c8b46`. **Two PRs open and unmerged:** #94 (the direct fix and
-  flip, plus the closed-negative selector) and #95 (the ABR width finding).
-  Both are measurement-and-fix, both carry their gate results.
-- Working tree otherwise clean.
+- **#94 and #95 are MERGED** (`b47dcb6`, `de9ddb4`); `main` carries the direct
+  fix and flip, the closed-negative selector, and the ABR width finding. The
+  tree is clean and every gate below was re-run on the merged result.
+- **A code review of #94 found the review-worthy thing before it merged**, and
+  it is worth knowing as a standard: the `lrvote` instrument -- written to study
+  an uninitialised read -- contained one, reading a co-located motion field
+  guarded by the wrong block's `lists_used`. The conclusion drawn from it was
+  then **re-derived on the fixed instrument** rather than assumed to survive
+  (every vote share moved by at most 0.0003, no ordering changed). Findings that
+  do not change an answer still have to be checked against it.
 - Goals as memory records them: G1 and G2 met, G3 open on two speed metrics —
   **but `docs/STATUS.md` does not say this**, so establish the real current
   reading before planning against it.
