@@ -16,7 +16,7 @@ a weaker implementation of the same one, and the row has to say so.
 
 ## Speed (openh264 / x264 wall time; lower = openh264 faster)
 
-Same convention as the goal board -- 1.00 means parity with x264, below 1.00
+Same convention as the goal table -- 1.00 means parity with x264, below 1.00
 means faster. Five CIF clips, matched 500 kbps ABR, interleaved timing,
 RUNS=3.
 
