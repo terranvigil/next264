@@ -2,7 +2,7 @@
 
 2026-08-27, Fable round, owner-directed. The question came from the bbb
 comparison: at matched bits we are 1.87x x264's instructions on bbb (the
-easiest board clip) against 1.27x on ducks (the hardest), and the wall ratio
+easiest table clip) against 1.27x on ducks (the hardest), and the wall ratio
 tracks that exactly. x264 sheds work on easy content much harder than we do.
 This document is the deep-research answer: what x264's shedding machinery
 actually is (read from source), where ours differs (measured two-sided with
@@ -15,7 +15,7 @@ side `Y264_BPROF=1` (309-line stage attribution), their side the
 instruments doc). GPL boundary per CONTRIBUTING rule 6: what crosses back is
 mechanism descriptions and calibration numbers, never code.
 
-## 1. The headline: the gap is the TAIL, not the search and not an early commit
+## 1. The main finding: the gap is the TAIL, not the search and not an early commit
 
 Analysis-domain collapse, easy/hard (lower = sheds harder):
 
@@ -110,7 +110,7 @@ direct is competitive, which is an ordering the RD itself then confirms.
 - **Gates:** BD both animation kinds (bbb + sita) AND akiyo + sintel ABR (the
   temporal-propagation canaries that killed the earlier exits) AND mobile +
   tempete (the high-band residual canaries). `recon_thread_gate.sh`,
-  `determ_repeat.sh` under load, full board with work column.
+  `determ_repeat.sh` under load, full table with work column.
 - **Kill:** BD-NEG median worse than +0.30% on the canary set, or the wall
   win under 2% on both easy clips at auto.
 
@@ -152,7 +152,7 @@ separate. Method per docs/archive/ml-training-method.md; BVI-AOM only.
 
 1. Arm A behind `Y264_B_TAIL33` (default off), byte-identical off. Wall A/B at
    t1 AND auto (the lowres lesson: the sign can flip with thread count), then
-   the BD battery, then the board.
+   the BD battery, then the table.
 2. Arm B behind `Y264_FAST_INTRA_GATE`, same discipline, can overlap A's BD
    runs (different files, same battery).
 3. Re-profile both sides after A+B (the two-sided per-stage table above is the

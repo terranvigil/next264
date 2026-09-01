@@ -6,7 +6,7 @@ what's-next pointer; the deep design lives in the docs it links to.
 ## Current state: pure-C speed at 3.0x, floor verdict reached
 
 The #1 owner priority is **pure-C (scalar, no-SIMD) yah264 `--preset medium` ==
-x264 medium encode speed**. No SIMD work until pure-C is at 1x. Headlines:
+x264 medium encode speed**. No SIMD work until pure-C is at 1x. Main points:
 
 - **Canonical benchmark: 3.0x vs x264** (samsung_720p, 180f, `--crf 30`,
   `--threads 1`, both encoders pure-C via x264 `--disable-asm`). Same algorithm
@@ -25,7 +25,7 @@ x264 medium encode speed**. No SIMD work until pure-C is at 1x. Headlines:
   Held to one thread it runs 1.16x to 1.30x slower than x264 across CIF, 720p
   and 1080p, so the shipped path has never been at parity on equal cores.
   Threads add another 0.14 to 0.33 of CPU work on our side, worst at CIF. The
-  board's sub-parity CIF rows come from filling more cores than x264 does.
+  table's sub-parity CIF rows come from filling more cores than x264 does.
   Nobody has costed the parallel overhead, and it is the piece with no owner.
 
 **Owner direction: the architectural bet, not more chipping.** Lookahead-driven
