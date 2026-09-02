@@ -35,7 +35,7 @@ separate, owner-kicked-off track).
 | 10 | C6 `DIRECT_AUTO` under the staircase (colmv on the row watermark); `stair_determ.sh` 32/32 first | 2 | funded, decision 2 | todo |
 | 11 | D3 to D5 bus (only if D2 re-anchors it); D7 psy/aq per-class screen; C3, C4 B-mode rate and chroma | 3 | | todo |
 | 12 | A6 CBR / capped VBR | 1 | | todo |
-| 13 | ten-clip board, three tiers, CRF and ABR (`ffboard.py`), after steps 6, 9 and 8; F1 to F4 alongside | all | goal figures only from this, never one draw | todo |
+| 13 | ten-clip board, three tiers, CRF and ABR (`ffboard.py`), after steps 6, 9 and 8; F1 to F4 alongside | all | goal figures only from this, never one draw | **CRF board read 09-02 pm** (`docs/board-2026-09-02b.md`): G1 0.97x / 1.16x (was 1.01 / 1.29), G2 0.84x / 1.12x, G3 0.95x / 1.18x (was 0.97 / 1.24); quality metrics met on every tier. Worst clip 0.01 / 0.03 over on goals 1 / 3, both on shields + sunflower. ABR half and F1-F4 still todo |
 
 Rules that apply to every step, restated because each has cost a round: zsh
 does not word-split (A/B loops in bash scripts, verify the two arms' md5s
