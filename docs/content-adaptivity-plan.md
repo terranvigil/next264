@@ -39,7 +39,7 @@ admission, probe cost — while the motion search is already competitive.
 **Three tempting theories are refuted by measurement, do not revisit:**
 
 - **x264's entry skip-commit is NOT their shedder.** At mbrd their entry bound
-  is `bskip_ssd <= (6*lambda2+128)>>8` (analyse.c ~3350: skip commits when its
+  is `bskip_ssd <= (6*lambda2+128)>>8` (skip commits when its
   distortion is under the minimum RD cost of ANY coded MB — 6 bits, the CAVLC
   floor). Sounds like the answer; it is not. On bbb their own B_SKIP verdicts
   nearly all went THROUGH analysis (79,673 of 79,776 ran ME), so the entry
@@ -56,13 +56,13 @@ admission, probe cost — while the motion search is already competitive.
   skip verdict (96.3 -> 83.8 -> 58.9 -> 68.3%, 76% of the population in the
   68% bucket). Measured 08-27, ae2960a. Only skip DISTORTION is monotone.
 
-## 2. What x264's ladder actually does (encoder/analyse.c, read 08-27)
+## 2. What x264's ladder actually does (behaviour read 08-27)
 
 For a B macroblock at medium (subme 7 = mbrd 1), in order:
 
 1. Direct MC + `i_bskip_cost = ssd_mb()`; commit B_SKIP iff under the 6-bit
    RD floor (~catches nothing on our content, see above), else keep the MC
-   (`b_skip_mc`) so it is not redone.
+   (the reuse-the-skip-MC flag) so it is not redone.
 2. Direct SATD, then 16x16 ME: L1 ref0, L0 ref0, rest — with, at subme 3-5
    only, a mid-ME B_SKIP commit when both searched MVs land within +-1 of the
    direct MV (~1900-1961). Inactive at medium.
@@ -78,8 +78,8 @@ For a B macroblock at medium (subme 7 = mbrd 1), in order:
    count is high; otherwise intra SATD thresholds tighten
    (`i16x16_thresh_lut`, scaled by subme). Content-keyed, not tuned per clip.
 5. Partition descent gates: 8x8 only when its cost estimate is competitive
-   with 16x16 (`i_thresh16x8` from neighbour mv costs, ~3096-3113);
-   `i_halfpel_thresh` skips subpel for uncompetitive refs.
+   with 16x16 (the rectangle threshold from neighbour mv costs);
+   the half-pel threshold skips subpel for uncompetitive refs.
 
 Also real but out of scope for this plan: b-adapt placed ~20% fewer B MBs than
 us on bbb (122,400 vs 152,945 in 60 frames) — their frame TYPER is itself
@@ -187,7 +187,7 @@ Reading the tournament to place the truncation found it **already there**:
 `bexit_ok` computes exactly the 33/32 direct-competitiveness test at exactly
 x264's point (macroblock.c ~7360), the tournament was already reordered to
 x264's shape (direct + 16x16 RD before any subpartition — the comment block
-cites the same analyse.c flow), and the B_SKIP return ships default-on for
+cites the same flow), and the B_SKIP return ships default-on for
 non-reference Bs. What Arm A actually had left was the reference-B half — and
 that too existed as `Y264_B_SKIP_EXIT=3` (E1, commit 568cf8c: readmit ref-Bs
 when `mbtree_off >= 0`, i.e. nothing downstream reads this MB), which PASSED
