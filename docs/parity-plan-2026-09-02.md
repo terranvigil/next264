@@ -23,7 +23,7 @@ separate, owner-kicked-off track).
 
 | # | step | track | first action | status |
 |---|---|---|---|---|
-| 1 | B0 P-skip census (`Y264_PSKIP_CENSUS`) | 2 | add the counter table in `analyze_p_mb`, verify md5-identical, read sunflower / shields / pedestrian / park_joy at their board CRFs | todo |
+| 1 | B0 P-skip census (`Y264_PSKIP_CENSUS`) | 2 | add the counter table in `analyze_p_mb`, verify md5-identical, read sunflower / shields / pedestrian / park_joy at their board CRFs | **done 09-02**: md5-identical t1/t12, gates clean; B1 qualifying fraction 34 / 45 / 20 / 33% (ceiling ~3.4% t1 on sunflower, under the 5% hoped), verdict-changing 1.2 / 4.7 / 0.6 / 8.8%; `local/records/pskip-census-2026-09-02.md` |
 | 2 | A1 ABR trace (`Y264_ABR_RFQP`) | 1 | print rf_qp / qpa / rceq / cplxr / wanted per frame for both models; reproduce the samsung and stockholm ladders | todo |
 | 3 | D1 riverbed AQ at its calibrated rate; D2 bus re-anchor; D6 sita under the shipped tune | 3 | encodes only, ~5 h total; each decides whether its successor exists | todo |
 | 4 | B2 8x8 reference clamp | 2 | ship if band-neutral (the `Y264_RECT_REFS` pattern) | todo |
@@ -185,6 +185,18 @@ deleted off-critical-path work and read null at t12). Ceiling on sunflower if
 all 118k qualify: ~10.5% of t1; at 40 to 60% qualifying, 4 to 6% t1. Gate: CRF
 band, worst clip reported, plus the ladder-shift check before any ABR-side
 refusal. One to two days after B0.
+
+B0 read (2026-09-02, `local/records/pskip-census-2026-09-02.md`): the
+qualifying fraction (ref 0 and MV within 1 qpel of the skip MV) is 34% of the
+full-tournament MBs on sunflower, 45% shields, 20% pedestrian, 33% park_joy,
+so B1's ceiling on the worst clip is ~3.4% of t1, not 5%; item E carries the
+rest of the worst-clip gap. The verdict-change population runs the other way,
+0.6-1.2% on the low-rate clips and 8.8% on park_joy (14.5% of its inter
+verdicts are P_8x8 on a non-zero ref), so B1's band gate is read on the
+high-rate clips first. The census also puts `P_SKIP_EXIT=2`'s defect in one
+table (its SATD screen misses 44-56% of the eventual skips and would exit
+5-23% of the inter verdicts) and shows pedestrian is an intra-admission clip
+(19% intra verdicts, intra runs on 70-77% of its P MBs), outside item B.
 
 B2, the 8x8 reference clamp (free rider, independent of B1). Our part-3 loop
 searches every reference for every 8x8 block; x264 clamps the 8x8 stage's
