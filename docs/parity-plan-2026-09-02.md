@@ -11,6 +11,38 @@ level with file:function citations (clean-room rule: understood, not copied).
 Every number here is in a log under `local/records/` or in the two documents
 above. Where a number is a guess it says so.
 
+## 0. Start here on a restart
+
+Work the queue below in order. Each line is one step from section 3; a step
+is done when its gate in section 3 has passed and the result is in
+`local/records/` and in the step's row here. Tracks 1 and 2 touch different
+files and may run concurrently in worktrees; the encode-only steps of track 3
+fill the gaps while builds and bands run. Nothing else in the tree is queued
+ahead of this list (the VideoToolbox plan in `docs/videotoolbox-plan.md` is a
+separate, owner-kicked-off track).
+
+| # | step | track | first action | status |
+|---|---|---|---|---|
+| 1 | B0 P-skip census (`Y264_PSKIP_CENSUS`) | 2 | add the counter table in `analyze_p_mb`, verify md5-identical, read sunflower / shields / pedestrian / park_joy at their board CRFs | todo |
+| 2 | A1 ABR trace (`Y264_ABR_RFQP`) | 1 | print rf_qp / qpa / rceq / cplxr / wanted per frame for both models; reproduce the samsung and stockholm ladders | todo |
+| 3 | D1 riverbed AQ at its calibrated rate; D2 bus re-anchor; D6 sita under the shipped tune | 3 | encodes only, ~5 h total; each decides whether its successor exists | todo |
+| 4 | B2 8x8 reference clamp | 2 | ship if band-neutral (the `Y264_RECT_REFS` pattern) | todo |
+| 5 | A2 `rc_set_qp_rf` behind `Y264_ABR_RF2` | 1 | the load-bearing ABR step; rate-accuracy gate | todo |
+| 6 | B1 shape-preserving exit (sized by step 1) | 2 | band + t1/t12 walls; B3 exact prune if `PPRUNE_PROBE` says ≥ 10% | todo |
+| 7 | C1 list-1 counter and `Y264_TDIR_L0ONLY` + C2 slice legality; C5 B-seed diagnostic | 2 | the direct precondition pair and the cheap diagnostic | todo |
+| 8 | A3 clamps, retire CFLOOR/CGUARD; A4 29-clip ABR table; A5 flip (pre-authorized, decision 1) and `rcp_lag=1` | 1 | | todo |
+| 9 | E1 trust stored leg cost; E2 lead sweep with the settled bound; E3 pool-mutex claims; E4 CPI counters | 2 | | todo |
+| 10 | C6 `DIRECT_AUTO` under the staircase (colmv on the row watermark); `stair_determ.sh` 32/32 first | 2 | funded, decision 2 | todo |
+| 11 | D3 to D5 bus (only if D2 re-anchors it); D7 psy/aq per-class screen; C3, C4 B-mode rate and chroma | 3 | | todo |
+| 12 | A6 CBR / capped VBR | 1 | | todo |
+| 13 | ten-clip board, three tiers, CRF and ABR (`ffboard.py`), after steps 6, 9 and 8; F1 to F4 alongside | all | goal figures only from this, never one draw | todo |
+
+Rules that apply to every step, restated because each has cost a round: zsh
+does not word-split (A/B loops in bash scripts, verify the two arms' md5s
+differ); check load and spinners before timing; `bin_ab` defaults to pure C;
+`YAH264_NO_ASM` is presence-based; t1 does not predict t12; a ~1% BD call goes
+to the band, never to the board's dVMAF; never move the goal-3 bar.
+
 ## 1. Where we stand
 
 The three goals all ask the same question: how fast are we versus x264 at the
@@ -66,7 +98,7 @@ at 12 and 24 Mbit/s; the slowest are 1080p and 720p at 1.5 to 3 Mbit/s.
 | 4 | 1080p CRF quality on direct-mode content (blue_sky +17.6, station2 −9.3, sunflower −6.2) | 1080p median +0.2 hides a ±30-point swing | each of our two direct derivations is weaker than x264's on the content that favours the other: our spatial-vs-temporal swing is twice x264's on every 1080p clip. The derivations themselves are equivalent to x264's clause by clause (verified); the differences are around them: we accept temporal direct from a colocated block that predicted from list 1 only (x264 refuses the MB), we have no slice-level temporal legality test, B modes are ranked on raw SATD with no mb_type rate term and no chroma, and spatial direct inherits our weaker B explicit search. `Y264_DIRECT_AUTO` is never worse than +2.8 on 16 clips but is blocked under the staircase by an unsequenced colocated motion field | refuses direct on list-1-only colocated blocks; forces spatial unless the list-1 ref's first list-0 POC equals the list-0 ref; charges direct 1λ, L0/L1 3λ, Bi 5-7λ; adds chroma to the screen; guards frame threads with a per-row cond-wait on every list-0 AND list-1 reference so temporal stays usable. Appendix A3 |
 | 5 | hand-drawn animation (sita +12.4 CRF, +35.7 ABR) | 720p class | intra path ahead; P half fixed by `Y264_MB_LAMBDA=5` (P-only now −3.5 ahead); the remaining +7.8 is B frames at the starved band, and the B-half knobs are closed (`sita-b-half-closed`). Never re-measured under the shipped `--tune animation`; `DIRECT_AUTO` reads −4.7 | the B-frame census differs but the census is a symptom, not a recipe. Appendix A4 |
 | 6 | bus_cif dVMAF −0.7 at matched size, +4 to +6% CRF band | the one quality-metric failure on the board | pinned to a uniform 3 to 4 point AC-retention deficit at equal or better MSE on every per-MB class ("we buy MSE, x264 buys texture"); mb-tree, ME, partitions, MV rate, reference inheritance, per-MB lambda, psy classes all refuted; the band is one CRF step wide so band BD is not quotable | trellis on 0.85²/0.65² lambdas where we pass one `lambda_mode(qp)`; otherwise a texture-preserving RD question with no knob. Appendix A4 |
-| 7 | riverbed_1080p +3.4 CRF (sat), bbb10s_1080p +8.3 | high-rate water; CGI at 1080p | riverbed: AQ off reads −2.35 on the base-path screen, so AQ misallocates on uniformly textured content. bbb10s carries no BD claim by the corpus doc's own rule (re-compressed source, no calibrated point) | AQ 1.0 mode 1 vs our 0.4 mode 2, calibrated on 7 CIF clips only. Appendix A4 |
+| 7 | riverbed_1080p +3.4 CRF (sat); bbb10s_1080p +8.3 withdrawn (decision 4) | high-rate water; CGI at 1080p | riverbed: AQ off reads −2.35 on the base-path screen, so AQ misallocates on uniformly textured content. bbb10s carries no BD claim by the corpus doc's own rule (re-compressed source, no calibrated point) | AQ 1.0 mode 1 vs our 0.4 mode 2, calibrated on 7 CIF clips only. Appendix A4 |
 | 8 | threaded CPU work 1.2 to 1.5x x264's for the same wall | every HD cell at auto threads, and the goal-3 worst clip through it | the mb-tree walk on the driver thread is the t12 critical path; Phase A re-evaluates every reused leg with a three-candidate SATD scan and the lookahead's bounded lead (bframes+1, x264's magnitude, never swept on a correct wait) leaves 29 anchors + 85 leaves per encode searching fresh; the pool mutex is taken twice per wavefront unit; threaded IPC collapses 36% vs x264's 12% on reference-streaming stages. Relocation arms are null (three refuted this week); only deletion transfers | computes every lookahead cost once per (p0, p1, b) bracket and caches it per frame, so mb-tree propagation reads and never searches (39 ms vs our 438 ms on samsung); frame threads duplicate state, never work, and share reference planes behind a per-row progress counter. Appendix A5 |
 
 The one-sentence version: at or ahead of x264 in CRF everywhere except
@@ -302,17 +334,64 @@ gates:
 Read the ten-clip board (`ffboard.py`, three tiers, CRF and ABR) after B, after
 E, and after A5. A goal figure is never adjudicated on one draw.
 
-## 5. Owner decisions surfaced, not taken
+## 5. Decisions taken, 2026-09-02
 
-1. Flip `Y264_ABR_RF2` as the default ABR controller once A4's table exists
-   (changes every ABR user's output).
-2. Fund the thread-safe `DIRECT_AUTO` form for the staircase (item C) rather
-   than the frame-pipeline form (+46 to 52% wall).
-3. Authorize the Fable-tier texture-RD programme for bus if D2 to D5 leave the
-   AC-retention reading standing.
-4. Whether bbb10s_1080p stays in any quality table (D8).
-5. `git push` of main (eight commits since `cf0ca18` at the time of writing,
-   nine with this document).
+The owner delegated these five on 2026-09-02 ("use that new info ... i want
+you to choose"). Each is recorded with the evidence it rests on and what would
+reopen it.
+
+1. **The ABR controller flip: yes, pre-authorized on A4's gate.** `Y264_ABR_RF2`
+   becomes the default ABR controller the moment step A4 reads ABR tax ≤ 6% at
+   720p, no clip worse than +5% against today's default, and the rate-accuracy
+   gate (within 5% at 300 frames, 8% at 150, on the four failure clips plus
+   five controls) holds. No further checkpoint. Reason: the current controller
+   loses 11 to 33% against our own CRF from one equation the design deletes,
+   and every ABR user today gets the starved I and the QP-51 windup; the gate
+   is stricter than the incumbent's own behaviour on every clip measured.
+   Reopens only if A4 fails its gate, in which case the design is wrong, not
+   the flip.
+
+2. **Fund the staircase form of `DIRECT_AUTO` (C6), refuse the frame-pipeline
+   form.** The frame-pipeline form's +46 to 52% wall is a speed regression on
+   every clip to buy a quality win on two, and goal 3 is read at auto threads.
+   The staircase form keeps the wall (+7 to 9% measured before the colmv fix,
+   target ≤ 1.05x after it) and the row-watermark publish is the same
+   mechanism x264 uses for the same problem. Order: C1 and C2 first (they are
+   the auto rule's precondition and likely carry most of sunflower's +35 on
+   their own), then C6. `stair_determ.sh` 32/32 before any wall or BD number;
+   if it cannot be made deterministic, fall back to the lookahead per-shot
+   decision carrying x264's score, and stop there.
+
+3. **The Fable-tier texture-RD programme for bus: not now.** It is one CIF clip
+   at −0.7 VMAF on a board whose other nine clips are ahead, its band cannot
+   currently quote a BD at all (one CRF step wide), and it has no ground-truth
+   gate. D2 to D5 are cheap, knob-shaped and run first; D5 (per-type RDOQ
+   lambda) is the only arm with a mechanism behind it. Reopen only if D2
+   re-anchors the deficit as real at the board point, D3 shows it uniform
+   across MB classes, D5 does not move it, and bus is still the board's one
+   dVMAF failure after items A to E ship. Until then the frontier-tier budget
+   goes to items A and C, which are differentiator-sized.
+
+4. **bbb10s_1080p leaves every quality table.** `docs/corpus-sources.md:155`
+   already forbids a BD claim on it (re-compressed H.264 source, no calibrated
+   point) and every number it has produced is saturation-flagged. It stays on
+   the speed board as a timed cell, which is what it was cut for. The CGI
+   quality clip is bbb_720p (calibrated, 450 frames). D8 is reduced to: if a
+   clean 1080p CGI source is obtained, calibrate it as a new clip; do not
+   spend encodes re-reading this one. The review's +8.3% and the "same content
+   −18.6 at 720p" contrast are withdrawn from the outlier list (row 7 above
+   stands for riverbed only).
+
+5. **Push main: yes, done with this commit.** Ten commits since `cf0ca18`, all
+   gated (t1 identity, t12 determinism under load, make test, conformance
+   317/317, thread recon gate, TSan, CRF band), the board they produced is
+   published in the tree, and the remote had not moved. The two files another
+   session left in the working tree (`docs/videotoolbox-plan.md`,
+   `docs/ideas.md`) are not part of it.
+
+What stays with the owner: the goal-3 bar itself (never moved), and any flip
+that changes default CRF output for every user (C3, C4, D1's content-gated AQ,
+D7) once its band exists; those are listed on the board when they come up.
 
 ---
 
