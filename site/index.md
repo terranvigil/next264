@@ -13,7 +13,7 @@ We are using x264 as a performance and quality baseline.
 
 ## Status
 
-Compared to x264, we currently lead with pure C, and our shipped NEON build ties it on small clips but runs noticeably slower at 1080p. Our SIMD still loses to x264's hand-written assembly in those cases. This is expected. It's pretty amazing what the authors were able to do there.
+Compared to x264 on a ten-clip board with 1080p in it, multi-threaded pure C leads (0.85x), the shipped NEON build sits at 0.97x, and single-threaded pure C at 1.01x. The open item is the same on every row: low-bitrate 1080p, where the worst clip runs 1.24 to 1.29x against a 1.15x bar. High-bitrate 1080p is where we are fastest.
 
 Criteria for performance (goal 3 still open):
 
@@ -24,13 +24,13 @@ Criteria for performance (goal 3 still open):
 | quality | within 0.5 VMAF |
 | compression | within 1.0% size |
 
-Current performance (CIF and 720p):
+Current performance (three CIF, four 720p, three 1080p; 2026-09-02):
 
 | goal | configuration | median | max | VMAF | size | status |
 |---|---|--:|--:|--:|--:|---|
-| 1 | pure C, single-threaded | **0.95x** | 1.04x | +0.00 | +0.1% | all metrics pass |
-| 2 | pure C, multi-threaded | **0.85x** | 0.96x | −0.08 | +0.2% | all metrics pass |
-| 3 | as-shipped SIMD, multi-threaded | 0.96x | 1.14x | −0.07 | +0.2% | all metrics pass 33% of runs |
+| 1 | pure C, single-threaded | 1.01x | 1.29x | +0.26 | +0.1% | worst clip over the bar |
+| 2 | pure C, multi-threaded | **0.85x** | 1.14x | +0.21 | +0.1% | all metrics pass |
+| 3 | as-shipped SIMD, multi-threaded | **0.97x** | 1.24x | +0.23 | +0.1% | worst clip over the bar |
 
 Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6. Our lead goes away as soon as the frame is large enough for both encoders to consume every core. Give row 3 a single thread and it is behind at every resolution, 1.16x at CIF and 1.30x at 1080p, because our SIMD loses to x264's hand-written assembly. Row 1 is the pure C tier, where we are ahead.
 
