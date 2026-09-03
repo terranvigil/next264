@@ -21,7 +21,7 @@ x264 medium encode speed**. No SIMD work until pure-C is at 1x. Main points:
   constraint that makes 1x impossible is exactly *pure-C + matched quality +
   no-SIMD*; the encoder runs fine WITH SIMD, which is the intended production
   path.
-- **The SIMD tier has two deficits of its own** (`docs/board-2026-08-28.md`).
+- **The SIMD tier has two deficits of its own** (`local/docs/board-2026-08-28.md`).
   Held to one thread it runs 1.16x to 1.30x slower than x264 across CIF, 720p
   and 1080p, so the shipped path has never been at parity on equal cores.
   Threads add another 0.14 to 0.33 of CPU work on our side, worst at CIF. The
