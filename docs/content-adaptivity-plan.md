@@ -39,10 +39,10 @@ admission, probe cost — while the motion search is already competitive.
 **Three tempting theories are refuted by measurement, do not revisit:**
 
 - **x264's entry skip-commit is NOT their shedder.** At mbrd their entry bound
-  is `bskip_ssd <= (6*lambda2+128)>>8` (skip commits when its
-  distortion is under the minimum RD cost of ANY coded MB — 6 bits, the CAVLC
-  floor). Sounds like the answer; it is not. On bbb their own B_SKIP verdicts
-  nearly all went THROUGH analysis (79,673 of 79,776 ran ME), so the entry
+  compares the skip form's distortion against the RD cost of six bits, so skip
+  commits when its distortion is under the minimum RD cost of ANY coded MB,
+  the CAVLC floor. Sounds like the answer; it is not. On bbb their own B_SKIP
+  verdicts nearly all went THROUGH analysis (79,673 of 79,776 ran ME), so the entry
   commit caught ~nothing on this content — and ported into our RD domain it
   covers ~0% of our escapees too (`Y264_FLATSKIP_STAT` RD-floor sweep: 100%
   precision at 0.0% coverage at 6 bits; 97.7% at 1.2% coverage at 12; 95.3% at
@@ -60,23 +60,23 @@ admission, probe cost — while the motion search is already competitive.
 
 For a B macroblock at medium (subme 7 = mbrd 1), in order:
 
-1. Direct MC + `i_bskip_cost = ssd_mb()`; commit B_SKIP iff under the 6-bit
-   RD floor (~catches nothing on our content, see above), else keep the MC
-   (the reuse-the-skip-MC flag) so it is not redone.
+1. Direct MC, then the direct form's SSD as the skip cost; commit B_SKIP iff
+   under the 6-bit RD floor (~catches nothing on our content, see above), else
+   keep the MC (the reuse-the-skip-MC flag) so it is not redone.
 2. Direct SATD, then 16x16 ME: L1 ref0, L0 ref0, rest — with, at subme 3-5
    only, a mid-ME B_SKIP commit when both searched MVs land within +-1 of the
-   direct MV (~1900-1961). Inactive at medium.
-3. **THE SHEDDER — the 33/32 early terminate (~3405):** if
-   `cost16x16direct <= best_inter_cost * 33/32`, run RD on the direct form
-   NOW, compare `i_bskip_cost` against the RD costs, and if skip wins COMMIT
+   direct MV. Inactive at medium.
+3. **THE SHEDDER — the 33/32 early terminate:** if the direct 16x16 cost is
+   within 33/32 of the best inter cost, run RD on the direct form NOW, compare
+   the skip cost against the RD costs, and if skip wins COMMIT
    AND RETURN — skipping partitions, sub-8x8, 16x8/8x16, qpel-RD refinement,
    and all intra. On easy content direct is nearly always competitive, so the
    whole tail vanishes: their RD averages 0.32us/MB and intra is touched on
    3.9% of skip-verdict MBs. This single gate is most of the 0.46 collapse.
-4. **`b_fast_intra` (~446-458):** intra analysis is admitted only when a
+4. **The intra-probe admission gate:** intra analysis is admitted only when a
    neighbour is intra, the colocated MB was intra, or the running frame intra
-   count is high; otherwise intra SATD thresholds tighten
-   (`i16x16_thresh_lut`, scaled by subme). Content-keyed, not tuned per clip.
+   count is high; otherwise intra SATD thresholds tighten, off a 16x16
+   threshold table scaled by subme. Content-keyed, not tuned per clip.
 5. Partition descent gates: 8x8 only when its cost estimate is competitive
    with 16x16 (the rectangle threshold from neighbour mv costs);
    the half-pel threshold skips subpel for uncompetitive refs.
@@ -114,7 +114,7 @@ direct is competitive, which is an ordering the RD itself then confirms.
 - **Kill:** BD-NEG median worse than +0.30% on the canary set, or the wall
   win under 2% on both easy clips at auto.
 
-### Arm B — b_fast_intra analog (cheap, independent)
+### Arm B — the intra-probe admission gate, ported (cheap, independent)
 
 Their predicate, ours to port behaviorally: admit the B/P intra probe only
 when a neighbour or colocated MB is intra or the frame's running intra rate is
@@ -160,6 +160,12 @@ separate. Method per docs/archive/ml-training-method.md; BVI-AOM only.
 4. Arm C/D measurements only if the after-profile still shows their stages.
 5. Ship decisions clip-set-wide, never per-clip; every arm's numbers land in
    this doc's revision history.
+
+Corrected 2026-09-03: neither `Y264_B_TAIL33` nor `Y264_FAST_INTRA_GATE` was
+ever created, and neither is a knob in the tree. Section 5 below says why. Arm A
+turned out to be already built and its remaining half already had a knob,
+`Y264_B_SKIP_EXIT`; Arm B was refused on its size without implementation. Read
+items 1 and 2 as the plan they were, not as settings.
 
 Instruments used (all pre-existing or landed 08-27): `Y264_BPROF`,
 `Y264_FLATSKIP_STAT` (+ RD-floor sweep), `xbprof.patch`, `scripts/ffboard.py`
