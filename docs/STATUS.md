@@ -5,6 +5,12 @@ what's-next pointer; the deep design lives in the docs it links to.
 
 ## Current state: pure-C speed at 3.0x, floor verdict reached
 
+> Note, 2026-09-03: everything in this section is the pure-C-floor era and is
+> kept for the reasoning, not the numbers. The 3.0x figure and the verdict below
+> were both overtaken; the current goal tables live in `README.md` and
+> `site/results.md` (2026-09-02: multi-threaded pure C 0.84x of x264's time,
+> shipped NEON 0.95x, single-threaded pure C 0.97x, at matched bitrate).
+
 The #1 owner priority is **pure-C (scalar, no-SIMD) yah264 `--preset medium` ==
 x264 medium encode speed**. No SIMD work until pure-C is at 1x. Main points:
 
@@ -45,7 +51,7 @@ removal). The 2-3x-class levers necessarily change the bitstream; they live
 under the BD gate. Don't over-constrain to byte-identical changes; that leaves
 the big BD-neutral moves on the table.
 
-## Shipped on the speed track (all gated: BD-neutral + conformance 249/249 + determinism)
+## Shipped on the speed track (all gated: BD-neutral + conformance clean + determinism)
 
 - **B two-partition economy**: bi-pred cache (byte-identical) plus x264-style
   orientation early-terminate (BD-neutral, 7 clips). 3.3x → **3.0x**.
@@ -84,16 +90,23 @@ SIMD.
 ## Solid ground (not in flux)
 
 - **Threading (row wavefront), default.** Full pass-1 analysis (I/P/B, CAVLC and
-  CABAC) runs on an in-frame row-wavefront, ~**4.4-5x on 8 threads**.
-  `--threads N` splits the budget into GOP-workers × in-frame threads, so even a
-  single-GOP clip scales. Gates: `--threads 1` byte-identical to the serial
-  build; threaded output deterministic (`--threads 4 == --threads 8`);
-  TSan-clean. BD-neutral vs serial (predecessor plus WPP pricing, the standard
-  threading trade). A serial nondeterminism (uninitialized co-located MV grid)
-  was root-caused and fixed. Design: docs/threading-wavefront-design.md.
+  CABAC) runs on an in-frame row-wavefront. `--threads N` splits the budget into
+  GOP-workers × in-frame threads, so even a single-GOP clip scales. No current
+  measurement backs the "4.4-5x on 8 threads" figure this section used to quote;
+  end-to-end thread scaling is what the goal tables in `README.md` and
+  `site/results.md` report. Gates: output reproducible run to run at a fixed
+  configuration, and TSan-clean. Byte-identity across thread counts is a race
+  canary, not a promise: `scripts/conformance.sh` compares threads 1/2/8 with the
+  deliberate thread-count variance pinned off (`Y264_STQ=0`, `Y264_RC_CARRY=0`),
+  because single-thread quality mode and the ABR carry across GOP instances both
+  vary output by thread count on purpose. A serial nondeterminism (uninitialized
+  co-located MV grid) was root-caused and fixed. Design:
+  docs/threading-wavefront-design.md.
 - **Format breadth, complete.** 10-bit, 4:2:2 and 4:4:4 all done (I/P/B, CAVLC
   and CABAC); only 4:4:4 8×8-transform is deferred. docs/chroma-format-plan.md.
-- **Conformance: 249/249 (468/468 full), recon-match clean.**
+- **Conformance: recon-match clean.** The check count is built at run time from
+  the fixtures and the fetched corpus, so quote the current count from
+  `scripts/conformance.sh` rather than a number written down here.
 - **CRF calibration** follows x264's ME-compensated lowres signal;
   base/slope/cap are env-overridable (`Y264_CRF_BASE/SLOPE/CAP`).
 
@@ -108,8 +121,11 @@ byte-identical to `make golden`), `make bench` (serial vs threaded), `make vmaf`
 ## Standing rules (don't relearn these the hard way)
 
 - Never ship a regression. Gate quality on **VMAF-NEG** BD, speed on both scalar
-  and NEON (`YAH264_NO_ASM=1`); a C win SIMD masks still matters.
-- Every threading change: byte-identical `--threads 1` vs HEAD **and** threaded
-  == serial, **and** TSan. Reproduce with `make repro`.
+  and NEON (`YAH264_NO_ASM=1`); a C win SIMD masks still matters. The knob is
+  presence-based, so `YAH264_NO_ASM=0` forces scalar too; the SIMD arm has to
+  unset it (`env -u YAH264_NO_ASM`), or both arms measure the same build.
+- Every threading change: reproducible output at a fixed configuration, the
+  thread-count canary in `scripts/conformance.sh` (which pins the deliberate
+  variance off), **and** TSan. Reproduce with `make repro`.
 - Other encoders are baselines measured from the outside, never source to work
   from. `CONTRIBUTING.md` has the rule and what it does and does not permit.
