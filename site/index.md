@@ -13,7 +13,7 @@ We are using x264 as a performance and quality baseline.
 
 ## Status
 
-Compared to x264 on a ten-clip board with 1080p in it, multi-threaded pure C leads (0.84x), the shipped NEON build sits at 0.95x, and single-threaded pure C at 0.97x. The open item is the same on every row: low-bitrate HD, where the worst clip runs 1.16 to 1.18x against a 1.15x bar. High-bitrate 1080p is where we are fastest.
+Compared to x264 on a ten-clip board with 1080p in it, multi-threaded pure C leads (0.84x), the shipped NEON build sits at 0.96x, and single-threaded pure C at 0.99x. The open item is the same on every row: low-bitrate HD, where the worst clip runs 1.16 to 1.18x against a 1.15x bar. High-bitrate 1080p is where we are fastest.
 
 Criteria for performance (goal 3 still open):
 
@@ -24,15 +24,22 @@ Criteria for performance (goal 3 still open):
 | quality | within 0.5 VMAF |
 | compression | within 1.0% size |
 
-Current performance (three CIF, four 720p, three 1080p; 2026-09-02):
+Current performance (three CIF, four 720p, three 1080p; 2026-09-03):
 
 | goal | configuration | median | max | VMAF | size | status |
 |---|---|--:|--:|--:|--:|---|
-| 1 | pure C, single-threaded | **0.97x** | 1.16x | +0.32 | +0.2% | worst clip 0.01 over the bar |
-| 2 | pure C, multi-threaded | **0.84x** | 1.12x | +0.22 | +0.2% | all metrics pass |
-| 3 | as-shipped SIMD, multi-threaded | **0.95x** | 1.18x | +0.24 | +0.2% | worst clip 0.03 over the bar |
+| 1 | pure C, single-threaded | **0.99x** | 1.22x | +0.27 | −0.1% | worst clip 0.07 over the bar |
+| 2 | pure C, multi-threaded | **0.84x** | 1.16x | +0.19 | −0.0% | worst clip 0.01 over the bar |
+| 3 | as-shipped SIMD, multi-threaded | **0.96x** | 1.22x | +0.21 | −0.0% | worst clip 0.07 over the bar |
 
-Big caveat: At 1080p, row 3 reads 1.28x to 1.47x. At CIF we keep 9 cores busy where x264 uses 6. Our lead goes away as soon as the frame is large enough for both encoders to consume every core. Give row 3 a single thread and it is behind at every resolution, 1.16x at CIF and 1.30x at 1080p, because our SIMD loses to x264's hand-written assembly. Row 1 is the pure C tier, where we are ahead.
+Big caveat: the board's resolution mix hides a rate story. Read by class,
+the shipped build (row 3) is 0.92x at CIF, 1.01x at 720p and 1.13x at 1080p,
+and the slow cells are the low-bitrate HD ones, not 1080p as such: the two
+high-bitrate 1080p clips are the fastest on the board. At CIF we keep 9 cores
+busy where x264 uses 6, and that lead goes away once the frame is large enough
+for both encoders to consume every core. Give row 3 a single thread and it is
+behind at every resolution, because our SIMD loses to x264's hand-written
+assembly. Row 1 is the pure C tier, where we are level.
 
 | goal | configuration | median | max | VMAF | size |
 |---|---|--:|--:|--:|--:|
