@@ -146,7 +146,7 @@ a new mechanism. Expected outcome: documented, refused.
 
 The 26%-of-analysis ceiling banked 08-27 shrinks by whatever A collects; the
 supervised route stays the answer for the population A's SATD gate cannot
-separate. Method per docs/archive/ml-training-method.md; BVI-AOM only.
+separate. Method per the local training-method note; BVI-AOM only.
 
 ## 4. Order of work and the standing rules that bind it
 
@@ -191,7 +191,7 @@ the gap is pre-ME skip prediction — M6.** Details, so nothing gets re-run:
 
 Reading the tournament to place the truncation found it **already there**:
 `bexit_ok` computes exactly the 33/32 direct-competitiveness test at exactly
-x264's point (macroblock.c ~7360), the tournament was already reordered to
+x264's point (our macroblock.c ~7360), the tournament was already reordered to
 x264's shape (direct + 16x16 RD before any subpartition — the comment block
 cites the same flow), and the B_SKIP return ships default-on for
 non-reference Bs. What Arm A actually had left was the reference-B half — and
