@@ -11,7 +11,7 @@ per-stage instruments), and the ranked arms with ceilings and kill criteria.
 Every number below is measured on this machine at the solved matched operating
 points (bbb n 25.34 / x 26.21, ducks n 23.03 / x 21.01), 60 frames, t1, our
 side `Y264_BPROF=1` (309-line stage attribution), their side the
-`xbprof.patch` fair build (`X264_BPROF=1`, vectorized C + asm per the
+an instrumented fair build of the reference (stage timers on, vectorized C + asm per the
 instruments doc). GPL boundary per CONTRIBUTING rule 6: what crosses back is
 mechanism descriptions and calibration numbers, never code.
 
