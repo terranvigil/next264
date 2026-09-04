@@ -22,12 +22,26 @@ Rules:
    | observing behaviour from the outside: output, bitrate, timings, decisions | reading a source file and reproducing what it says |
    | reading published papers and algorithm descriptions | transcribing an implementation, in any language or style |
    | building and measuring another encoder as a baseline | carrying its structure, naming or line order across |
-   | implementing a technique the literature describes | copying the code the of the implementation  |
+   | implementing a technique the literature describes | copying the code of the implementation |
 
 4. What you may use freely: the H.264/AVC specification (ITU-T H.264), published
    papers, the JM reference software's behavior as a conformance oracle (run it,
    compare output; do not copy it), public documentation, and your own knowledge
    of how video coding works.
+
+5. **No internal identifiers of another encoder, anywhere that ships.** Not in
+   code, comments, commit messages, docs, the site or PR text: no x264/x265
+   function, variable, struct-field, macro or enum names, no file names, no
+   file:line references into their source. Describe what the other encoder
+   *does* in behavioural terms ("the exit fires after the ref-0 16x16 search
+   when the MV is within one quarter-pel of the skip MV") and, at most, name its
+   public options (`qcomp`, `ipratio`, `--preset`, `--subme`, `--direct`). When
+   a technique is one x264 also uses, say the implementation here is
+   independent. Notes taken while studying a reference stay out of the tree --
+   untracked `local/records/` or a private notebook. Naming internals reads as
+   source-level derivation whether or not any line was copied, and for a BSD-2
+   project the appearance matters as much as the fact. (Owner rule, 2026-09-02;
+   referred to elsewhere in the tree as clean-room rule 8.)
 
 If you are unsure whether something crosses the line, ask in a PR before writing.
 
