@@ -35,6 +35,37 @@ plan is per-shot analysis driving per-shot QP first (safe in any stream), then
 predicted-hull ladder output (per-shot resolution decisions for segmented
 streaming). Details in `shot-based-plan.md`.
 
+**Status (2026-09-05): the first two stages shipped, and they found a bug in
+the flat path.** S1 promotes the pre-scan to a shot table (`--shot-table`,
+`--cut-split` puts an IDR on every cut). S2 is per-shot CRF (`--shot-crf`):
+-10.8 / -7.6 / -5.9% BD-VMAF-NEG against cut-split alone on the three
+multi-shot sequences (CIF / 720p / 1080p concatenations of the board clips),
+with the worst shot's quality rising at every point. The control that
+mattered was x264: on those sequences our flat CRF trailed it by 13.4 / 4.9
+/ 7.3% while leading by 6-14% on the same clips singly, so per-shot CRF was
+catching up, not pulling ahead. The cause was the AQ frame-mean term running
+at the 0.4 within-frame strength (x264: 1.0) with two thirds of the frames
+carrying none at all; fixed on the CRF base QP for every path, streaming
+included (`Y264_AQ_DC`): -8.2 / -4.1 / -6.2% against the old default, x264
+gap +4.4 / +0.3 / +0.7, single-shot band median +0.30%. The shot flags keep
+a 1-4% lead over that because they see the whole file. Next: S3, per-shot
+tool choices, gated against the new default. The measuring instruments are
+`scripts/multishot_bd.py` and `scripts/make_multishot.py`.
+
+**How this differs from Netflix's dynamic optimizer.** Netflix encodes every
+shot many times, at several resolutions and quality points, measures each
+result, builds the rate-quality hull per shot and then picks one point per
+shot so the whole title sits at one quality-per-bit slope; it is a search
+run by an orchestrator above the encoder, at dozens of encodes per shot.
+What shipped here is a single pass with no trial encodes: the shot's cost
+comes from the lookahead's downscaled analysis, the offset comes from a
+closed-form curve (x264's rate equation at shot granularity), and every shot
+is coded once at the source resolution. It gets the direction of Netflix's
+allocation (cheaper on hard shots, richer on easy ones) at zero extra
+encoding cost, and it cannot get the parts that need the search: the exact
+slope-matched point per shot, and resolution switching. Those are the
+hull-assist and ladder stages of `shot-based-plan.md`, still planned.
+
 Sources: [Netflix dynamic optimizer](https://netflixtechblog.com/dynamic-optimizer-a-perceptual-video-encoding-optimization-framework-e19f1e3a277f),
 [RCN-Hull, convex hull prediction by recurrent learning](https://arxiv.org/abs/2206.04877),
 [VCA project](https://github.com/cd-athena/VCA),
